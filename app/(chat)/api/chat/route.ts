@@ -36,11 +36,7 @@ import { after } from 'next/server';
 import type { Chat } from '@/lib/db/schema';
 import { differenceInSeconds } from 'date-fns';
 import { ChatSDKError } from '@/lib/errors';
-import {
-  validatePrompt,
-  validateResponse,
-  checkValidationResult,
-} from '@/lib/ai/arthur';
+import { validatePrompt, validateResponse } from '@/lib/ai/arthur';
 
 export const maxDuration = 60;
 
