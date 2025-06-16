@@ -80,6 +80,10 @@ export async function POST(request: Request) {
     const { id, message, selectedChatModel, selectedVisibilityType } =
       requestBody;
 
+    // Test keyword to replace
+    const testKeyword = 'test';
+    const replacement = 'REDACTED';
+
     const session = await auth();
 
     if (!session?.user) {
@@ -152,7 +156,64 @@ export async function POST(request: Request) {
     await createStreamId({ streamId, chatId: id });
 
     const stream = createDataStream({
-      execute: (dataStream) => {
+      execute: async (dataStream) => {
+        // First, get the complete response without streaming
+        const completeResponse = await new Promise<string>((resolve) => {
+          let fullResponse = '';
+          
+          const tempStream = streamText({
+            model: myProvider.languageModel(selectedChatModel),
+            system: systemPrompt({ selectedChatModel, requestHints }),
+            messages,
+            maxSteps: 5,
+            experimental_activeTools:
+              selectedChatModel === 'chat-model-reasoning'
+                ? []
+                : [
+                    'getWeather',
+                    'createDocument',
+                    'updateDocument',
+                    'requestSuggestions',
+                  ],
+            experimental_transform: smoothStream({ chunking: 'word' }),
+            experimental_generateMessageId: generateUUID,
+            tools: {
+              getWeather,
+              createDocument: createDocument({ session, dataStream }),
+              updateDocument: updateDocument({ session, dataStream }),
+              requestSuggestions: requestSuggestions({
+                session,
+                dataStream,
+              }),
+            },
+            onChunk: ({ chunk }) => {
+              if (chunk.type === 'text-delta' && typeof chunk.textDelta === 'string') {
+                fullResponse += chunk.textDelta;
+              }
+            },
+            onFinish: () => {
+              resolve(fullResponse);
+            },
+            experimental_telemetry: {
+              isEnabled: isProductionEnvironment,
+              functionId: 'stream-text',
+            },
+          });
+
+          tempStream.consumeStream();
+        });
+
+        // Validate the response itself
+        const responseValidation = await validateResponse(
+          promptValidation.inference_id,
+          completeResponse,
+          message.content
+        );
+
+        // Redact based on response validation
+        const redactedResponse = redactSensitiveContent(completeResponse, responseValidation);
+
+        // Now start the actual streaming with the redacted response
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel, requestHints }),
@@ -178,7 +239,20 @@ export async function POST(request: Request) {
               dataStream,
             }),
           },
+          onChunk: ({ chunk }) => {
+            // Pass through all chunks except text-delta
+            if (chunk.type !== 'text-delta') {
+              // Use type assertion for non-text-delta chunks since they have complex types
+              dataStream.writeData(chunk as any);
+            }
+          },
           onFinish: async ({ response }) => {
+            // Stream the final redacted response
+            dataStream.writeData({
+              type: 'text-delta',
+              textDelta: redactedResponse,
+            } as const);
+
             if (session.user?.id) {
               try {
                 const assistantId = getTrailingMessageId({
@@ -196,61 +270,39 @@ export async function POST(request: Request) {
                   responseMessages: response.messages,
                 });
 
-                // Validate assistant's response with Arthur
-                const responseValidation = await validateResponse(
-                  promptValidation.inference_id,
-                  assistantMessage.parts?.[0]?.type === 'text'
-                    ? assistantMessage.parts[0].text
-                    : assistantMessage.content,
-                  message.content, // Pass the original prompt as context
-                );
-
-                // If validation fails, redact sensitive content
-                if (
-                  responseValidation.rule_results.some(
-                    (rule) => rule.result === 'Fail',
+                // Only keep text parts and redact them
+                const redactedParts = (assistantMessage.parts ?? [])
+                  .filter(
+                    (part) =>
+                      part.type === 'text' && typeof part.text === 'string',
                   )
-                ) {
-                  const originalText =
-                    assistantMessage.parts?.[0]?.type === 'text'
-                      ? assistantMessage.parts[0].text
-                      : assistantMessage.content;
-                  const redactedText = redactSensitiveContent(
-                    originalText,
-                    responseValidation,
-                  );
+                  .map((part) => ({
+                    ...part,
+                    text: redactSensitiveContent(
+                      (part as { text: string }).text,
+                      responseValidation,
+                    ),
+                  }));
 
-                  // Update the message with redacted content
-                  if (assistantMessage.parts?.[0]?.type === 'text') {
-                    assistantMessage.parts[0].text = redactedText;
-                  } else {
-                    assistantMessage.content = redactedText;
-                  }
-
-                  // Add a warning about the redaction
-                  const failedRules = responseValidation.rule_results
-                    .filter((rule) => rule.result === 'Fail')
-                    .map((rule) => rule.name)
-                    .join(', ');
-
-                  assistantMessage.content = `[Content Warning: Some parts of this message were redacted due to ${failedRules}]\n\n${assistantMessage.content}`;
-                }
-
+                // Save the message with redacted parts
                 await saveMessages({
                   messages: [
                     {
                       id: assistantId,
                       chatId: id,
                       role: assistantMessage.role,
-                      parts: assistantMessage.parts,
+                      parts: redactedParts,
                       attachments:
                         assistantMessage.experimental_attachments ?? [],
                       createdAt: new Date(),
                     },
                   ],
                 });
-              } catch (_) {
-                console.error('Failed to save chat or validate response');
+              } catch (error) {
+                console.error(
+                  'Failed to save chat or validate response:',
+                  error,
+                );
               }
             }
           },
@@ -261,7 +313,6 @@ export async function POST(request: Request) {
         });
 
         result.consumeStream();
-
         result.mergeIntoDataStream(dataStream, {
           sendReasoning: true,
         });

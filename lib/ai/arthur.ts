@@ -97,29 +97,41 @@ export function redactSensitiveContent(
 ): string {
   let redactedText = text;
 
-  // Get all matches from different rule types
-  const matches = validationResult.rule_results.flatMap((rule) => {
-    if (rule.result === 'Pass') return [];
+  // Only process keyword matches
+  const keywordMatches = validationResult.rule_results
+    .filter((rule) => rule.result === 'Fail' && rule.details?.keyword_matches)
+    .flatMap((rule) => rule.details?.keyword_matches || [])
+    .map((match) => match.keyword);
 
-    return [
-      // Get keyword matches
-      ...(rule.details?.keyword_matches?.map((match) => match.keyword) || []),
-      // Get regex matches
-      ...(rule.details?.regex_matches?.map((match) => match.matching_text) ||
-        []),
-      // Get PII matches
-      ...(rule.details?.pii_entities?.map((entity) => entity.span) || []),
-    ];
-  });
+  // Sort keywords by length (longest first) to avoid partial replacements
+  keywordMatches.sort((a, b) => b.length - a.length);
 
-  // Sort matches by length (longest first) to avoid partial replacements
-  matches.sort((a, b) => b.length - a.length);
-
-  // Replace each match with [REDACTED]
-  for (const match of matches) {
+  // Replace each keyword with [REDACTED]
+  for (const keyword of keywordMatches) {
     redactedText = redactedText.replace(
-      new RegExp(escapeRegExp(match), 'g'),
+      new RegExp(escapeRegExp(keyword), 'gi'),
       '[REDACTED]',
+    );
+  }
+
+  return redactedText;
+}
+
+export function redactCustomKeywords(
+  text: string,
+  keywords: string[],
+  replacement = '[REDACTED]',
+): string {
+  let redactedText = text;
+
+  // Sort keywords by length (longest first) to avoid partial replacements
+  const sortedKeywords = [...keywords].sort((a, b) => b.length - a.length);
+
+  // Replace each keyword with the replacement text
+  for (const keyword of sortedKeywords) {
+    redactedText = redactedText.replace(
+      new RegExp(escapeRegExp(keyword), 'gi'),
+      replacement,
     );
   }
 
