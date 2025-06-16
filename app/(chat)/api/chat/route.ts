@@ -36,6 +36,11 @@ import { after } from 'next/server';
 import type { Chat } from '@/lib/db/schema';
 import { differenceInSeconds } from 'date-fns';
 import { ChatSDKError } from '@/lib/errors';
+import {
+  validatePrompt,
+  validateResponse,
+  checkValidationResult,
+} from '@/lib/ai/arthur';
 
 export const maxDuration = 60;
 
@@ -91,6 +96,8 @@ export async function POST(request: Request) {
     if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
       return new ChatSDKError('rate_limit:chat').toResponse();
     }
+
+    const promptValidation = await validatePrompt(message.content);
 
     const chat = await getChatById({ id });
 
@@ -189,6 +196,15 @@ export async function POST(request: Request) {
                   responseMessages: response.messages,
                 });
 
+                // Validate assistant's response with Arthur
+                const responseValidation = await validateResponse(
+                  promptValidation.inference_id,
+                  assistantMessage.parts?.[0]?.type === 'text'
+                    ? assistantMessage.parts[0].text
+                    : assistantMessage.content,
+                  message.content, // Pass the original prompt as context
+                );
+
                 await saveMessages({
                   messages: [
                     {
@@ -203,7 +219,7 @@ export async function POST(request: Request) {
                   ],
                 });
               } catch (_) {
-                console.error('Failed to save chat');
+                console.error('Failed to save chat or validate response');
               }
             }
           },
