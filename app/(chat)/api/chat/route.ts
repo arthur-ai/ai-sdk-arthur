@@ -36,7 +36,11 @@ import { after } from 'next/server';
 import type { Chat } from '@/lib/db/schema';
 import { differenceInSeconds } from 'date-fns';
 import { ChatSDKError } from '@/lib/errors';
-import { validatePrompt, validateResponse } from '@/lib/ai/arthur';
+import {
+  validatePrompt,
+  validateResponse,
+  redactSensitiveContent,
+} from '@/lib/ai/arthur';
 
 export const maxDuration = 60;
 
@@ -200,6 +204,37 @@ export async function POST(request: Request) {
                     : assistantMessage.content,
                   message.content, // Pass the original prompt as context
                 );
+
+                // If validation fails, redact sensitive content
+                if (
+                  responseValidation.rule_results.some(
+                    (rule) => rule.result === 'Fail',
+                  )
+                ) {
+                  const originalText =
+                    assistantMessage.parts?.[0]?.type === 'text'
+                      ? assistantMessage.parts[0].text
+                      : assistantMessage.content;
+                  const redactedText = redactSensitiveContent(
+                    originalText,
+                    responseValidation,
+                  );
+
+                  // Update the message with redacted content
+                  if (assistantMessage.parts?.[0]?.type === 'text') {
+                    assistantMessage.parts[0].text = redactedText;
+                  } else {
+                    assistantMessage.content = redactedText;
+                  }
+
+                  // Add a warning about the redaction
+                  const failedRules = responseValidation.rule_results
+                    .filter((rule) => rule.result === 'Fail')
+                    .map((rule) => rule.name)
+                    .join(', ');
+
+                  assistantMessage.content = `[Content Warning: Some parts of this message were redacted due to ${failedRules}]\n\n${assistantMessage.content}`;
+                }
 
                 await saveMessages({
                   messages: [
