@@ -19,9 +19,9 @@ function PureSuggestedActions({
 }: SuggestedActionsProps) {
   const suggestedActions = [
     {
-      title: 'What are the advantages',
-      label: 'of using Next.js?',
-      action: 'What are the advantages of using Next.js?',
+      title: 'A story about',
+      label: 'your favorite apple',
+      action: 'Tell me a story about your favorite apple',
     },
     {
       title: 'Write code to',
