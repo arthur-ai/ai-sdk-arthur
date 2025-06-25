@@ -36,15 +36,14 @@ import { after } from 'next/server';
 import type { Chat } from '@/lib/db/schema';
 import { differenceInSeconds } from 'date-fns';
 import { ChatSDKError } from '@/lib/errors';
-import {
-  validatePrompt,
-  validateResponse,
-  redactSensitiveContent,
-} from '@/lib/ai/arthur';
+import { createArthurAPI } from '@/lib/ai/arthur-api';
 
 export const maxDuration = 60;
 
 let globalStreamContext: ResumableStreamContext | null = null;
+
+// Initialize Arthur API client
+const arthurAPI = createArthurAPI();
 
 function getStreamContext() {
   if (!globalStreamContext) {
@@ -66,6 +65,29 @@ function getStreamContext() {
   return globalStreamContext;
 }
 
+// Simple redaction function for sensitive content
+function redactSensitiveContent(text: string, keywords: string[]): string {
+  let redactedText = text;
+  
+  // Sort keywords by length (longest first) to avoid partial replacements
+  const sortedKeywords = [...keywords].sort((a, b) => b.length - a.length);
+  
+  // Replace each keyword with [REDACTED]
+  for (const keyword of sortedKeywords) {
+    redactedText = redactedText.replace(
+      new RegExp(escapeRegExp(keyword), 'gi'),
+      '[REDACTED]',
+    );
+  }
+  
+  return redactedText;
+}
+
+// Helper function to escape special regex characters
+function escapeRegExp(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
 
@@ -79,10 +101,6 @@ export async function POST(request: Request) {
   try {
     const { id, message, selectedChatModel, selectedVisibilityType } =
       requestBody;
-
-    // Test keyword to replace
-    const testKeyword = 'test';
-    const replacement = 'REDACTED';
 
     const session = await auth();
 
@@ -101,7 +119,17 @@ export async function POST(request: Request) {
       return new ChatSDKError('rate_limit:chat').toResponse();
     }
 
-    const promptValidation = await validatePrompt(message.content);
+    // Validate prompt using new API client
+    const taskId = process.env.ARTHUR_TASK_ID;
+    if (!taskId) {
+      console.error('ARTHUR_TASK_ID environment variable is not set');
+      return new ChatSDKError('bad_request:api').toResponse();
+    }
+
+    const promptValidation = await arthurAPI.validatePrompt(taskId, {
+      prompt: message.content,
+      user_id: session.user.id,
+    });
 
     const chat = await getChatById({ id });
 
@@ -203,15 +231,24 @@ export async function POST(request: Request) {
           tempStream.consumeStream();
         });
 
-        // Validate the response itself
-        const responseValidation = await validateResponse(
-          promptValidation.inference_id,
-          completeResponse,
-          message.content
+        // Validate the response using new API client
+        const responseValidation = await arthurAPI.validateResponse(
+          taskId,
+          promptValidation.inference_id!,
+          {
+            response: completeResponse,
+            context: message.content,
+          }
         );
 
+        // Extract keywords that failed validation for redaction
+        const failedKeywords = responseValidation.rule_results
+          ?.filter(rule => rule.result === 'Fail' && rule.details?.keyword_matches)
+          .flatMap(rule => rule.details?.keyword_matches || [])
+          .map(match => match.keyword) || [];
+
         // Redact based on response validation
-        const redactedResponse = redactSensitiveContent(completeResponse, responseValidation);
+        const redactedResponse = redactSensitiveContent(completeResponse, failedKeywords);
 
         // Now start the actual streaming with the redacted response
         const result = streamText({
@@ -280,7 +317,7 @@ export async function POST(request: Request) {
                     ...part,
                     text: redactSensitiveContent(
                       (part as { text: string }).text,
-                      responseValidation,
+                      failedKeywords,
                     ),
                   }));
 
