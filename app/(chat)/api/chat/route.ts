@@ -65,29 +65,6 @@ function getStreamContext() {
   return globalStreamContext;
 }
 
-// Simple redaction function for sensitive content
-function redactSensitiveContent(text: string, keywords: string[]): string {
-  let redactedText = text;
-  
-  // Sort keywords by length (longest first) to avoid partial replacements
-  const sortedKeywords = [...keywords].sort((a, b) => b.length - a.length);
-  
-  // Replace each keyword with [REDACTED]
-  for (const keyword of sortedKeywords) {
-    redactedText = redactedText.replace(
-      new RegExp(escapeRegExp(keyword), 'gi'),
-      '[REDACTED]',
-    );
-  }
-  
-  return redactedText;
-}
-
-// Helper function to escape special regex characters
-function escapeRegExp(string: string): string {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
 
@@ -119,7 +96,7 @@ export async function POST(request: Request) {
       return new ChatSDKError('rate_limit:chat').toResponse();
     }
 
-    // Validate prompt using new API client
+    // Validate prompt using new API client for logging
     const taskId = process.env.ARTHUR_TASK_ID;
     if (!taskId) {
       console.error('ARTHUR_TASK_ID environment variable is not set');
@@ -231,26 +208,22 @@ export async function POST(request: Request) {
           tempStream.consumeStream();
         });
 
-        // Validate the response using new API client
-        const responseValidation = await arthurAPI.validateResponse(
-          taskId,
-          promptValidation.inference_id!,
-          {
-            response: completeResponse,
-            context: message.content,
-          }
-        );
+        // Validate the response using new API client for logging (no redaction)
+        try {
+          await arthurAPI.validateResponse(
+            taskId,
+            promptValidation.inference_id!,
+            {
+              response: completeResponse,
+              context: message.content,
+            }
+          );
+        } catch (error) {
+          console.error('Failed to validate response with Arthur:', error);
+          // Continue with the response even if validation fails
+        }
 
-        // Extract keywords that failed validation for redaction
-        const failedKeywords = responseValidation.rule_results
-          ?.filter(rule => rule.result === 'Fail' && rule.details?.keyword_matches)
-          .flatMap(rule => rule.details?.keyword_matches || [])
-          .map(match => match.keyword) || [];
-
-        // Redact based on response validation
-        const redactedResponse = redactSensitiveContent(completeResponse, failedKeywords);
-
-        // Now start the actual streaming with the redacted response
+        // Now start the actual streaming with the original response (no redaction)
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel, requestHints }),
@@ -276,20 +249,7 @@ export async function POST(request: Request) {
               dataStream,
             }),
           },
-          onChunk: ({ chunk }) => {
-            // Pass through all chunks except text-delta
-            if (chunk.type !== 'text-delta') {
-              // Use type assertion for non-text-delta chunks since they have complex types
-              dataStream.writeData(chunk as any);
-            }
-          },
           onFinish: async ({ response }) => {
-            // Stream the final redacted response
-            dataStream.writeData({
-              type: 'text-delta',
-              textDelta: redactedResponse,
-            } as const);
-
             if (session.user?.id) {
               try {
                 const assistantId = getTrailingMessageId({
@@ -307,28 +267,14 @@ export async function POST(request: Request) {
                   responseMessages: response.messages,
                 });
 
-                // Only keep text parts and redact them
-                const redactedParts = (assistantMessage.parts ?? [])
-                  .filter(
-                    (part) =>
-                      part.type === 'text' && typeof part.text === 'string',
-                  )
-                  .map((part) => ({
-                    ...part,
-                    text: redactSensitiveContent(
-                      (part as { text: string }).text,
-                      failedKeywords,
-                    ),
-                  }));
-
-                // Save the message with redacted parts
+                // Save the message with original parts (no redaction)
                 await saveMessages({
                   messages: [
                     {
                       id: assistantId,
                       chatId: id,
                       role: assistantMessage.role,
-                      parts: redactedParts,
+                      parts: assistantMessage.parts,
                       attachments:
                         assistantMessage.experimental_attachments ?? [],
                       createdAt: new Date(),
@@ -337,7 +283,7 @@ export async function POST(request: Request) {
                 });
               } catch (error) {
                 console.error(
-                  'Failed to save chat or validate response:',
+                  'Failed to save chat:',
                   error,
                 );
               }
