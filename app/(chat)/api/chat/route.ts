@@ -36,14 +36,13 @@ import { after } from 'next/server';
 import type { Chat } from '@/lib/db/schema';
 import { differenceInSeconds } from 'date-fns';
 import { ChatSDKError } from '@/lib/errors';
-import { createArthurAPI } from '@/lib/ai/arthur-api';
+import { createArthurAPI } from '@/lib/ai';
+
+const api = createArthurAPI();
 
 export const maxDuration = 60;
 
 let globalStreamContext: ResumableStreamContext | null = null;
-
-// Initialize Arthur API client
-const arthurAPI = createArthurAPI();
 
 function getStreamContext() {
   if (!globalStreamContext) {
@@ -96,20 +95,13 @@ export async function POST(request: Request) {
       return new ChatSDKError('rate_limit:chat').toResponse();
     }
 
-    // Validate prompt using new API client for logging
-    const taskId = process.env.ARTHUR_TASK_ID;
-    if (!taskId) {
-      console.error('ARTHUR_TASK_ID environment variable is not set');
-      return new ChatSDKError('bad_request:api').toResponse();
-    }
-
-    const promptValidation = await arthurAPI.validatePrompt(taskId, {
+    const promptValidation = await api.validatePrompt(process.env.ARTHUR_TASK_ID!, {
       prompt: message.content,
-      user_id: session.user.id,
     });
-
+    
     const chat = await getChatById({ id });
-
+    
+    
     if (!chat) {
       const title = await generateTitleFromUserMessage({
         message,
@@ -161,69 +153,7 @@ export async function POST(request: Request) {
     await createStreamId({ streamId, chatId: id });
 
     const stream = createDataStream({
-      execute: async (dataStream) => {
-        // First, get the complete response without streaming
-        const completeResponse = await new Promise<string>((resolve) => {
-          let fullResponse = '';
-          
-          const tempStream = streamText({
-            model: myProvider.languageModel(selectedChatModel),
-            system: systemPrompt({ selectedChatModel, requestHints }),
-            messages,
-            maxSteps: 5,
-            experimental_activeTools:
-              selectedChatModel === 'chat-model-reasoning'
-                ? []
-                : [
-                    'getWeather',
-                    'createDocument',
-                    'updateDocument',
-                    'requestSuggestions',
-                  ],
-            experimental_transform: smoothStream({ chunking: 'word' }),
-            experimental_generateMessageId: generateUUID,
-            tools: {
-              getWeather,
-              createDocument: createDocument({ session, dataStream }),
-              updateDocument: updateDocument({ session, dataStream }),
-              requestSuggestions: requestSuggestions({
-                session,
-                dataStream,
-              }),
-            },
-            onChunk: ({ chunk }) => {
-              if (chunk.type === 'text-delta' && typeof chunk.textDelta === 'string') {
-                fullResponse += chunk.textDelta;
-              }
-            },
-            onFinish: () => {
-              resolve(fullResponse);
-            },
-            experimental_telemetry: {
-              isEnabled: isProductionEnvironment,
-              functionId: 'stream-text',
-            },
-          });
-
-          tempStream.consumeStream();
-        });
-
-        // Validate the response using new API client for logging (no redaction)
-        try {
-          await arthurAPI.validateResponse(
-            taskId,
-            promptValidation.inference_id!,
-            {
-              response: completeResponse,
-              context: message.content,
-            }
-          );
-        } catch (error) {
-          console.error('Failed to validate response with Arthur:', error);
-          // Continue with the response even if validation fails
-        }
-
-        // Now start the actual streaming with the original response (no redaction)
+      execute: (dataStream) => {
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel, requestHints }),
@@ -267,7 +197,18 @@ export async function POST(request: Request) {
                   responseMessages: response.messages,
                 });
 
-                // Save the message with original parts (no redaction)
+                // Validate assistant's response with Arthur
+                const responseValidation = await api.validateResponse(
+                  process.env.ARTHUR_TASK_ID!,
+                  promptValidation.inference_id!,
+                  {
+                    response: assistantMessage.content,
+                    context: message.content,
+                  },
+                );
+
+                console.log(responseValidation);
+
                 await saveMessages({
                   messages: [
                     {
@@ -281,11 +222,8 @@ export async function POST(request: Request) {
                     },
                   ],
                 });
-              } catch (error) {
-                console.error(
-                  'Failed to save chat:',
-                  error,
-                );
+              } catch (_) {
+                console.error('Failed to save chat or validate response');
               }
             }
           },
@@ -296,6 +234,7 @@ export async function POST(request: Request) {
         });
 
         result.consumeStream();
+
         result.mergeIntoDataStream(dataStream, {
           sendReasoning: true,
         });
