@@ -14,8 +14,10 @@ import {
   Eye,
   BarChart3,
   Info,
-  X
+  X,
+  ArrowLeft
 } from 'lucide-react';
+import Link from 'next/link';
 import { 
   SearchTasks, 
   ValidationExample, 
@@ -40,6 +42,16 @@ export default function ExamplesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+      {/* Back to Home Button */}
+      <div className="mb-8">
+        <Link href="/">
+          <Button variant="outline" className="flex items-center gap-2">
+            <ArrowLeft className="size-4" />
+            Back to Home
+          </Button>
+        </Link>
+      </div>
+
       {/* Header */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">
@@ -49,6 +61,14 @@ export default function ExamplesPage() {
           Interactive examples demonstrating how to build safer, more reliable AI agents with comprehensive validation, 
           monitoring, and compliance features.
         </p>
+        <div className="mt-6">
+          <Link href="/examples/real">
+            <Button variant="outline" className="flex items-center gap-2 mx-auto">
+              <BarChart3 className="size-4" />
+              View Live Data from Your Arthur Instance
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Interactive Examples */}

@@ -48,22 +48,6 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                     className="p-2 h-fit"
                     onClick={() => {
                       setOpenMobile(false);
-                      router.push('/examples');
-                    }}
-                  >
-                    <BookOpen className="size-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent align="end">API Examples</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    type="button"
-                    className="p-2 h-fit"
-                    onClick={() => {
-                      setOpenMobile(false);
                       router.push('/');
                       router.refresh();
                     }}
