@@ -4,7 +4,8 @@ export type ErrorType =
   | 'forbidden'
   | 'not_found'
   | 'rate_limit'
-  | 'offline';
+  | 'offline'
+  | 'validation';
 
 export type Surface =
   | 'chat'
@@ -107,6 +108,9 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
     case 'bad_request:document':
       return 'The request to create or update the document was invalid. Please check your input and try again.';
 
+    case 'validation:chat':
+      return 'Your message may contain sensitive data - sending message failed.';
+
     default:
       return 'Something went wrong. Please try again later.';
   }
@@ -126,6 +130,8 @@ function getStatusCodeByType(type: ErrorType) {
       return 429;
     case 'offline':
       return 503;
+    case 'validation':
+      return 400;
     default:
       return 500;
   }

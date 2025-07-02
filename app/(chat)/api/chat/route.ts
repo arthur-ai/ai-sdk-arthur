@@ -36,7 +36,7 @@ import { after } from 'next/server';
 import type { Chat } from '@/lib/db/schema';
 import { differenceInSeconds } from 'date-fns';
 import { ChatSDKError } from '@/lib/errors';
-import { createArthurAPI } from '@/lib/ai';
+import { createArthurAPI, ValidationResult } from '@/lib/ai';
 
 const api = createArthurAPI();
 
@@ -66,6 +66,7 @@ function getStreamContext() {
 
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
+  let promptValidation: ValidationResult;
 
   try {
     const json = await request.json();
@@ -74,51 +75,105 @@ export async function POST(request: Request) {
     return new ChatSDKError('bad_request:api').toResponse();
   }
 
+  // Destructure all variables at the beginning
+  const { id, message, selectedChatModel, selectedVisibilityType } = requestBody;
+
+  // Create chat first (before PII validation) so we can save messages
+  const session = await auth();
+
+  if (!session?.user) {
+    return new ChatSDKError('unauthorized:chat').toResponse();
+  }
+
+  const userType: UserType = session.user.type;
+
+  const messageCount = await getMessageCountByUserId({
+    id: session.user.id,
+    differenceInHours: 24,
+  });
+
+  if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
+    return new ChatSDKError('rate_limit:chat').toResponse();
+  }
+  
+  const chat = await getChatById({ id });
+  
+  if (!chat) {
+    const title = await generateTitleFromUserMessage({
+      message,
+    });
+
+    await saveChat({
+      id,
+      userId: session.user.id,
+      title,
+      visibility: selectedVisibilityType,
+    });
+  } else {
+    if (chat.userId !== session.user.id) {
+      return new ChatSDKError('forbidden:chat').toResponse();
+    }
+  }
+
   try {
-    const { id, message, selectedChatModel, selectedVisibilityType } =
-      requestBody;
-
-    const session = await auth();
-
-    if (!session?.user) {
-      return new ChatSDKError('unauthorized:chat').toResponse();
-    }
-
-    const userType: UserType = session.user.type;
-
-    const messageCount = await getMessageCountByUserId({
-      id: session.user.id,
-      differenceInHours: 24,
-    });
-
-    if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
-      return new ChatSDKError('rate_limit:chat').toResponse();
-    }
-
-    const promptValidation = await api.validatePrompt(process.env.ARTHUR_TASK_ID!, {
-      prompt: message.content,
-    });
-    
-    const chat = await getChatById({ id });
-    
-    
-    if (!chat) {
-      const title = await generateTitleFromUserMessage({
-        message,
-      });
-
-      await saveChat({
-        id,
-        userId: session.user.id,
-        title,
-        visibility: selectedVisibilityType,
-      });
+    if (!process.env.ARTHUR_TASK_ID) {
+      console.log('ARTHUR_TASK_ID not configured, skipping prompt validation');
     } else {
-      if (chat.userId !== session.user.id) {
-        return new ChatSDKError('forbidden:chat').toResponse();
+      promptValidation = await api.validatePrompt(
+        process.env.ARTHUR_TASK_ID,
+        {
+          prompt: message.content,
+        },
+      );
+
+      console.log('Prompt validation:', promptValidation);
+      
+      // Check for PII validation failures
+      if (promptValidation.rule_results) {
+        const piiRuleFailure = promptValidation.rule_results.find(
+          (rule) => rule.rule_type === 'PIIDataRule' && rule.result === 'Fail'
+        );
+        
+        if (piiRuleFailure) {
+          // Save the user message so it's visible on refresh
+          await saveMessages({
+            messages: [
+              {
+                chatId: id,
+                id: message.id,
+                role: 'user',
+                parts: message.parts,
+                attachments: message.experimental_attachments ?? [],
+                createdAt: new Date(),
+              },
+            ],
+          });
+          
+          // Save a system message explaining the failure
+          const systemMessageId = generateUUID();
+          await saveMessages({
+            messages: [
+              {
+                chatId: id,
+                id: systemMessageId,
+                role: 'assistant',
+                parts: [{ type: 'text', text: 'Your message may contain sensitive data - sending message failed' }],
+                attachments: [],
+                createdAt: new Date(),
+              },
+            ],
+          });
+          
+          return new ChatSDKError('validation:chat', 'Your message may contain sensitive data - sending message failed').toResponse();
+        }
       }
     }
+    
+  } catch (error) {
+    console.error('Failed to validate prompt: ', error);
+  }
 
+  try {
     const previousMessages = await getMessagesByChatId({ id });
 
     const messages = appendClientMessage({
@@ -207,7 +262,7 @@ export async function POST(request: Request) {
                   },
                 );
 
-                console.log(responseValidation);
+                console.log('Response validation: ', responseValidation);
 
                 await saveMessages({
                   messages: [
