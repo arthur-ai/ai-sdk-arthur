@@ -4,6 +4,7 @@ import {
   createDataStream,
   smoothStream,
   streamText,
+  wrapLanguageModel,
 } from 'ai';
 import { auth, type UserType } from '@/app/(auth)/auth';
 import { type RequestHints, systemPrompt } from '@/lib/ai/prompts';
@@ -36,6 +37,7 @@ import { after } from 'next/server';
 import type { Chat } from '@/lib/db/schema';
 import { differenceInSeconds } from 'date-fns';
 import { ChatSDKError } from '@/lib/errors';
+import { createArthurValidationMiddleware } from '@/lib/ai/middleware/arthur-validation';
 
 export const maxDuration = 60;
 
@@ -60,6 +62,12 @@ function getStreamContext() {
 
   return globalStreamContext;
 }
+
+const arthurValidation = createArthurValidationMiddleware({
+  taskId: process.env.ARTHUR_TASK_ID!,
+  apiKey: process.env.ARTHUR_API_KEY,
+  baseUrl: process.env.ARTHUR_API_BASE,
+});
 
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
@@ -147,7 +155,10 @@ export async function POST(request: Request) {
     const stream = createDataStream({
       execute: (dataStream) => {
         const result = streamText({
-          model: myProvider.languageModel(selectedChatModel),
+          model: wrapLanguageModel({
+            model: myProvider.languageModel(selectedChatModel),
+            middleware: arthurValidation,
+          }),
           system: systemPrompt({ selectedChatModel, requestHints }),
           messages,
           maxSteps: 5,
