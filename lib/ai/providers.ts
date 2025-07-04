@@ -40,27 +40,29 @@ export const myProvider = isTestEnvironment
     })
   : customProvider({
       languageModels: {
+        // Arthur validation middleware example
+        'chat-model': wrapLanguageModel({
+          model: xai('grok-2-vision-1212'),
+          middleware: arthurValidation,
+        }),
+
+        // Arthur PII blocking middleware example
+
         // 'chat-model': wrapLanguageModel({
         //   model: xai('grok-2-vision-1212'),
-        //   middleware: arthurValidation,
+        //   middleware: arthurPIIBlocking,
         // }),
+
         'chat-model-reasoning': wrapLanguageModel({
           model: xai('grok-3-mini-beta'),
           middleware: [extractReasoningMiddleware({ tagName: 'think' }), arthurValidation],
         }),
-        'title-model': wrapLanguageModel({
-          model: xai('grok-2-1212'),
-          middleware: arthurValidation,
-        }),
+        'title-model': xai('grok-2-1212'),
         'artifact-model': wrapLanguageModel({
           model: xai('grok-2-1212'),
           middleware: arthurValidation,
         }),
         
-        'chat-model': wrapLanguageModel({
-          model: xai('grok-2-vision-1212'),
-          middleware: arthurPIIBlocking,
-        }),
       },
       imageModels: {
         'small-model': xai.image('grok-2-image'),
