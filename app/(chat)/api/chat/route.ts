@@ -37,8 +37,6 @@ import { after } from 'next/server';
 import type { Chat } from '@/lib/db/schema';
 import { differenceInSeconds } from 'date-fns';
 import { ChatSDKError } from '@/lib/errors';
-import { createArthurValidationMiddleware } from '@/lib/ai/middleware/arthur-validation';
-
 export const maxDuration = 60;
 
 let globalStreamContext: ResumableStreamContext | null = null;
@@ -62,12 +60,6 @@ function getStreamContext() {
 
   return globalStreamContext;
 }
-
-const arthurValidation = createArthurValidationMiddleware({
-  taskId: process.env.ARTHUR_TASK_ID!,
-  apiKey: process.env.ARTHUR_API_KEY,
-  baseUrl: process.env.ARTHUR_API_BASE,
-});
 
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
@@ -155,10 +147,7 @@ export async function POST(request: Request) {
     const stream = createDataStream({
       execute: (dataStream) => {
         const result = streamText({
-          model: wrapLanguageModel({
-            model: myProvider.languageModel(selectedChatModel),
-            middleware: arthurValidation,
-          }),
+          model: myProvider.languageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel, requestHints }),
           messages,
           maxSteps: 5,

@@ -11,6 +11,14 @@ import {
   reasoningModel,
   titleModel,
 } from './models.test';
+import { createArthurValidationMiddleware } from './middleware/arthur-validation';
+
+// Create Arthur validation middleware
+const arthurValidation = createArthurValidationMiddleware({
+  taskId: process.env.ARTHUR_TASK_ID!,
+  apiKey: process.env.ARTHUR_API_KEY,
+  baseUrl: process.env.ARTHUR_API_BASE,
+});
 
 export const myProvider = isTestEnvironment
   ? customProvider({
@@ -23,13 +31,22 @@ export const myProvider = isTestEnvironment
     })
   : customProvider({
       languageModels: {
-        'chat-model': xai('grok-2-vision-1212'),
+        'chat-model': wrapLanguageModel({
+          model: xai('grok-2-vision-1212'),
+          middleware: arthurValidation,
+        }),
         'chat-model-reasoning': wrapLanguageModel({
           model: xai('grok-3-mini-beta'),
-          middleware: extractReasoningMiddleware({ tagName: 'think' }),
+          middleware: [extractReasoningMiddleware({ tagName: 'think' }), arthurValidation],
         }),
-        'title-model': xai('grok-2-1212'),
-        'artifact-model': xai('grok-2-1212'),
+        'title-model': wrapLanguageModel({
+          model: xai('grok-2-1212'),
+          middleware: arthurValidation,
+        }),
+        'artifact-model': wrapLanguageModel({
+          model: xai('grok-2-1212'),
+          middleware: arthurValidation,
+        }),
       },
       imageModels: {
         'small-model': xai.image('grok-2-image'),
