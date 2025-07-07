@@ -43,14 +43,12 @@ function createArthurValidationMiddleware(
           user_id: providerMetadata?.userId as string || undefined,
         });
       } catch (error) {
-        // Optionally log, but never block
         console.error('Arthur prompt validation error:', error);
       }
 
       // Generate the response
       const result = await doGenerate();
 
-      // Always call response validation, but never block or throw
       if (promptValidation?.inference_id && result.text) {
         try {
           await arthurAPI.validateResponse(
@@ -62,7 +60,6 @@ function createArthurValidationMiddleware(
             }
           );
         } catch (error) {
-          // Optionally log, but never block
           console.error('Arthur response validation error:', error);
         }
       }
@@ -89,7 +86,6 @@ function createArthurValidationMiddleware(
             .join(' ')
         : String(lastUserMessage.content);
 
-      // Always call Arthur validation, but never block or throw
       let promptValidation: ValidationResult | undefined = undefined;
       try {
         const providerMetadata = params.providerMetadata as Record<string, any> | undefined;
@@ -99,7 +95,6 @@ function createArthurValidationMiddleware(
           user_id: providerMetadata?.userId as string || undefined,
         });
       } catch (error) {
-        // Optionally log, but never block
         console.error('Arthur prompt validation error:', error);
       }
 
@@ -121,7 +116,7 @@ function createArthurValidationMiddleware(
           // If this is the finish chunk and we haven't validated the response yet
           if (chunk.type === 'finish' && !hasValidatedResponse && promptValidation?.inference_id) {
             hasValidatedResponse = true;
-            // Validate the response asynchronously, but never block
+
             arthurAPI.validateResponse(
               taskId,
               promptValidation.inference_id,
@@ -130,7 +125,6 @@ function createArthurValidationMiddleware(
                 context: textContent,
               }
             ).catch(error => {
-              // Optionally log, but never block
               console.error('Arthur response validation error:', error);
             });
           }
