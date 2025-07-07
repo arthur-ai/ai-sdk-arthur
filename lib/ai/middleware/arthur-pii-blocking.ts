@@ -8,7 +8,7 @@ interface ArthurPIIBlockingMiddlewareOptions {
   blockMessage?: string;
 }
 
-export function createArthurPIIBlockingMiddleware(
+function createArthurPIIBlockingMiddleware(
   options: ArthurPIIBlockingMiddlewareOptions
 ): LanguageModelV1Middleware {
   const { taskId, apiKey, baseUrl, blockMessage = "Your message may contain sensitive data - sending message failed" } = options;
@@ -144,3 +144,11 @@ export function createArthurPIIBlockingMiddleware(
     },
   };
 } 
+
+// Example: PII blocking middleware
+export const arthurPIIBlocking = createArthurPIIBlockingMiddleware({
+  taskId: process.env.ARTHUR_TASK_ID!,
+  apiKey: process.env.ARTHUR_API_KEY,
+  baseUrl: process.env.ARTHUR_API_BASE,
+  blockMessage: "Your the message was blocked due to organization security policies",
+});

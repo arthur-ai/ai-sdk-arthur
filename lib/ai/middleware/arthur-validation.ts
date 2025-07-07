@@ -7,7 +7,7 @@ interface ArthurValidationMiddlewareOptions {
   baseUrl?: string;
 }
 
-export function createArthurValidationMiddleware(
+function createArthurValidationMiddleware(
   options: ArthurValidationMiddlewareOptions
 ): LanguageModelV1Middleware {
   const { taskId, apiKey, baseUrl } = options;
@@ -146,3 +146,10 @@ export function createArthurValidationMiddleware(
     },
   };
 } 
+
+// Create Arthur validation middleware (observational only)
+export const arthurValidation = createArthurValidationMiddleware({
+  taskId: process.env.ARTHUR_TASK_ID!,
+  apiKey: process.env.ARTHUR_API_KEY,
+  baseUrl: process.env.ARTHUR_API_BASE,
+});
