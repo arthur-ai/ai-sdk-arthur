@@ -28,7 +28,9 @@ export const myProvider = isTestEnvironment
         // Arthur validation middleware example
         'chat-model': wrapLanguageModel({
           model: xai('grok-2-vision-1212'),
+          // Use arthurValidation for observational logging (recommended for debugging)
           // middleware: arthurValidation,
+          // Use arthurPIIBlocking for PII blocking with response logging
           middleware: arthurPIIBlocking,
         }),
 
@@ -39,7 +41,7 @@ export const myProvider = isTestEnvironment
         'title-model': xai('grok-2-1212'),
         'artifact-model': wrapLanguageModel({
           model: xai('grok-2-1212'),
-          middleware: arthurPIIBlocking,
+          middleware: arthurValidation,
         }),
         
       },

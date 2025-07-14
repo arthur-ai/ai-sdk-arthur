@@ -15,7 +15,6 @@ function createArthurValidationMiddleware(
 
   return {
     wrapGenerate: async ({ doGenerate, params }) => {
-      // Extract the prompt from the messages
       const messages = params.prompt as CoreMessage[];
       const lastUserMessage = messages?.findLast(
         (msg: CoreMessage) => msg.role === 'user'
@@ -25,7 +24,6 @@ function createArthurValidationMiddleware(
         return doGenerate();
       }
 
-      // Extract text content from the message
       const textContent = Array.isArray(lastUserMessage.content) 
         ? lastUserMessage.content
             .filter(item => item.type === 'text')
@@ -33,7 +31,6 @@ function createArthurValidationMiddleware(
             .join(' ')
         : String(lastUserMessage.content);
 
-      // Always call Arthur validation, but never block or throw
       let promptValidation: ValidationResult | undefined = undefined;
       try {
         const providerMetadata = params.providerMetadata as Record<string, any> | undefined;
@@ -46,7 +43,6 @@ function createArthurValidationMiddleware(
         console.error('Arthur prompt validation error:', error);
       }
 
-      // Generate the response
       const result = await doGenerate();
 
       if (promptValidation?.inference_id && result.text) {
@@ -68,7 +64,6 @@ function createArthurValidationMiddleware(
     },
 
     wrapStream: async ({ doStream, params }) => {
-      // Extract the prompt from the messages
       const messages = params.prompt as CoreMessage[];
       const lastUserMessage = messages?.findLast(
         (msg: CoreMessage) => msg.role === 'user'
@@ -78,7 +73,6 @@ function createArthurValidationMiddleware(
         return doStream();
       }
 
-      // Extract text content from the message
       const textContent = Array.isArray(lastUserMessage.content) 
         ? lastUserMessage.content
             .filter(item => item.type === 'text')
@@ -98,7 +92,6 @@ function createArthurValidationMiddleware(
         console.error('Arthur prompt validation error:', error);
       }
 
-      // Get the stream
       const { stream, ...rest } = await doStream();
 
       let generatedText = '';
@@ -113,7 +106,6 @@ function createArthurValidationMiddleware(
             generatedText += chunk.textDelta;
           }
 
-          // If this is the finish chunk and we haven't validated the response yet
           if (chunk.type === 'finish' && !hasValidatedResponse && promptValidation?.inference_id) {
             hasValidatedResponse = true;
 
@@ -124,7 +116,8 @@ function createArthurValidationMiddleware(
                 response: generatedText,
                 context: textContent,
               }
-            ).catch(error => {
+            ).then(() => {
+            }).catch(error => {
               console.error('Arthur response validation error:', error);
             });
           }
@@ -141,7 +134,6 @@ function createArthurValidationMiddleware(
   };
 } 
 
-// Create Arthur validation middleware (observational only)
 export const arthurValidation = createArthurValidationMiddleware({
   taskId: process.env.ARTHUR_TASK_ID!,
   apiKey: process.env.ARTHUR_API_KEY,

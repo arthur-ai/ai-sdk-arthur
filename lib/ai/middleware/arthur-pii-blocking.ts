@@ -16,7 +16,6 @@ function createArthurPIIBlockingMiddleware(
 
   return {
     wrapGenerate: async ({ doGenerate, params }) => {
-      // Extract the prompt from the messages
       const messages = params.prompt as CoreMessage[];
       const lastUserMessage = messages?.findLast(
         (msg: CoreMessage) => msg.role === 'user'
@@ -26,7 +25,6 @@ function createArthurPIIBlockingMiddleware(
         return doGenerate();
       }
 
-      // Extract text content from the message
       const textContent = Array.isArray(lastUserMessage.content) 
         ? lastUserMessage.content
             .filter(item => item.type === 'text')
@@ -34,22 +32,20 @@ function createArthurPIIBlockingMiddleware(
             .join(' ')
         : String(lastUserMessage.content);
 
-      // Check for PII rule failures
+      let promptValidation: ValidationResult | undefined = undefined;
       try {
         const providerMetadata = params.providerMetadata as Record<string, any> | undefined;
-        const promptValidation = await arthurAPI.validatePrompt(taskId, {
+        promptValidation = await arthurAPI.validatePrompt(taskId, {
           prompt: textContent,
           conversation_id: providerMetadata?.conversationId as string || undefined,
           user_id: providerMetadata?.userId as string || undefined,
         });
-
-        // Check if any PII rules failed
+        
         const piiRuleFailures = promptValidation.rule_results?.filter(
           rule => rule.result === 'Fail' && rule.rule_type === 'PIIDataRule'
         );
 
         if (piiRuleFailures && piiRuleFailures.length > 0) {
-          // Return blocked response instead of calling the LLM
           return {
             text: blockMessage,
             finishReason: 'stop',
@@ -58,16 +54,30 @@ function createArthurPIIBlockingMiddleware(
           };
         }
       } catch (error) {
-        // If validation fails, continue with normal generation
         console.error('Arthur PII validation error:', error);
       }
 
-      // If no PII issues or validation failed, proceed with normal generation
-      return doGenerate();
+      const result = await doGenerate();
+
+      if (promptValidation?.inference_id && result.text) {
+        try {
+          await arthurAPI.validateResponse(
+            taskId,
+            promptValidation.inference_id,
+            {
+              response: result.text,
+              context: textContent,
+            }
+          );
+        } catch (error) {
+          console.error('Arthur PII response validation error:', error);
+        }
+      }
+
+      return result;
     },
 
     wrapStream: async ({ doStream, params }) => {
-      // Extract the prompt from the messages
       const messages = params.prompt as CoreMessage[];
       const lastUserMessage = messages?.findLast(
         (msg: CoreMessage) => msg.role === 'user'
@@ -77,7 +87,6 @@ function createArthurPIIBlockingMiddleware(
         return doStream();
       }
 
-      // Extract text content from the message
       const textContent = Array.isArray(lastUserMessage.content) 
         ? lastUserMessage.content
             .filter(item => item.type === 'text')
@@ -85,25 +94,22 @@ function createArthurPIIBlockingMiddleware(
             .join(' ')
         : String(lastUserMessage.content);
 
-      // Check for PII rule failures
+      let promptValidation: ValidationResult | undefined = undefined;
       try {
         const providerMetadata = params.providerMetadata as Record<string, any> | undefined;
-        const promptValidation = await arthurAPI.validatePrompt(taskId, {
+        promptValidation = await arthurAPI.validatePrompt(taskId, {
           prompt: textContent,
           conversation_id: providerMetadata?.conversationId as string || undefined,
           user_id: providerMetadata?.userId as string || undefined,
         });
-
-        // Check if any PII rules failed
+        
         const piiRuleFailures = promptValidation.rule_results?.filter(
           rule => rule.result === 'Fail' && rule.rule_type === 'PIIDataRule'
         );
 
         if (piiRuleFailures && piiRuleFailures.length > 0) {
-          // Return blocked response stream instead of calling the LLM
           const blockedStream = new ReadableStream({
             start(controller) {
-              // Send the blocked message as text deltas
               const words = blockMessage.split(' ');
               let index = 0;
               
@@ -114,7 +120,7 @@ function createArthurPIIBlockingMiddleware(
                     textDelta: words[index] + (index < words.length - 1 ? ' ' : ''),
                   });
                   index++;
-                  setTimeout(sendNextWord, 50); // Small delay between words
+                  setTimeout(sendNextWord, 50);
                 } else {
                   controller.enqueue({
                     type: 'finish',
@@ -135,17 +141,51 @@ function createArthurPIIBlockingMiddleware(
           };
         }
       } catch (error) {
-        // If validation fails, continue with normal generation
         console.error('Arthur PII validation error:', error);
       }
 
-      // If no PII issues or validation failed, proceed with normal stream
-      return doStream();
+      const { stream, ...rest } = await doStream();
+
+      let generatedText = '';
+      let hasValidatedResponse = false;
+
+      const transformStream = new TransformStream<
+        LanguageModelV1StreamPart,
+        LanguageModelV1StreamPart
+      >({
+        transform(chunk, controller) {
+          if (chunk.type === 'text-delta') {
+            generatedText += chunk.textDelta;
+          }
+
+          if (chunk.type === 'finish' && !hasValidatedResponse && promptValidation?.inference_id) {
+            hasValidatedResponse = true;
+
+            arthurAPI.validateResponse(
+              taskId,
+              promptValidation.inference_id,
+              {
+                response: generatedText,
+                context: textContent,
+              }
+            ).then(() => {
+            }).catch(error => {
+              console.error('Arthur PII response validation error:', error);
+            });
+          }
+
+          controller.enqueue(chunk);
+        },
+      });
+
+      return {
+        stream: stream.pipeThrough(transformStream),
+        ...rest,
+      };
     },
   };
 } 
 
-// Example: PII blocking middleware
 export const arthurPIIBlocking = createArthurPIIBlockingMiddleware({
   taskId: process.env.ARTHUR_TASK_ID!,
   apiKey: process.env.ARTHUR_API_KEY,
