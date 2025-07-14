@@ -4,6 +4,7 @@ import {
   createDataStream,
   smoothStream,
   streamText,
+  wrapLanguageModel,
 } from 'ai';
 import { auth, type UserType } from '@/app/(auth)/auth';
 import { type RequestHints, systemPrompt } from '@/lib/ai/prompts';
@@ -36,7 +37,6 @@ import { after } from 'next/server';
 import type { Chat } from '@/lib/db/schema';
 import { differenceInSeconds } from 'date-fns';
 import { ChatSDKError } from '@/lib/errors';
-
 export const maxDuration = 60;
 
 let globalStreamContext: ResumableStreamContext | null = null;
