@@ -17,6 +17,7 @@
 
 <p align="center">
   <a href="https://chat-sdk.dev"><strong>Read Docs</strong></a> ·
+  <a href="https://docs.arthur.ai"><strong>Read Docs</strong></a> ·
   <a href="#quick-start"><strong>Quick Start</strong></a> ·
   <a href="#features"><strong>Features</strong></a> ·
   <a href="#model-providers"><strong>Model Providers</strong></a> ·
@@ -74,13 +75,13 @@
 
 This template ships with [xAI](https://x.ai) `grok-2-1212` as the default chat model. However, with the [AI SDK](https://sdk.vercel.ai/docs), you can switch LLM providers to [OpenAI](https://openai.com), [Anthropic](https://anthropic.com), [Cohere](https://cohere.com/), and [many more](https://sdk.vercel.ai/providers/ai-sdk-providers) with just a few lines of code.
 
-## Arthur AI Setup Guide
+## Running Locally
 
 You will need to use the environment variables to run Next.js AI Chatbot. It's recommended you use [Vercel Environment Variables](https://vercel.com/docs/projects/environment-variables) for this, but a `.env` file is all that is necessary.
 Use Arthur AI's Docker-based local deployment option for local Vercel development runs (`vercel dev`)
 
 **Required Environment Variables:**
-- `AUTH_SECRET` - Secret for authentication
+- `AUTH_SECRET` - Secret for authentication (generate with `openssl rand -base64 32`)
 - `ARTHUR_API_KEY` - Your Arthur AI API key
 - `ARTHUR_MODEL_ID` - Your Arthur AI model ID
 - `ARTHUR_API_BASE` - Arthur AI API base URL (for production, use your self-hosted engine endpoint)
