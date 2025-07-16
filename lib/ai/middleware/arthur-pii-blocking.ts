@@ -1,5 +1,10 @@
-import type { LanguageModelV1Middleware, LanguageModelV1StreamPart, CoreMessage } from 'ai';
+import type {
+  LanguageModelV1Middleware,
+  LanguageModelV1StreamPart,
+  CoreMessage,
+} from 'ai';
 import { createArthurAPI, ValidationResult } from '../arthur-api';
+import { ArthurAPI } from '../../lib/ai/arthur-api';
 
 interface ArthurPIIBlockingMiddlewareOptions {
   taskId: string;
@@ -9,40 +14,51 @@ interface ArthurPIIBlockingMiddlewareOptions {
 }
 
 function createArthurGuardrailsMiddleware(
-  options: ArthurPIIBlockingMiddlewareOptions
+  options: ArthurPIIBlockingMiddlewareOptions,
 ): LanguageModelV1Middleware {
-  const { taskId, apiKey, baseUrl, blockMessage = "Your message may contain sensitive data - sending message failed" } = options;
+  const {
+    taskId,
+    apiKey,
+    baseUrl,
+    blockMessage = 'Your message may contain sensitive data - sending message failed',
+  } = options;
   const arthurAPI = createArthurAPI(apiKey, baseUrl);
 
   return {
     wrapGenerate: async ({ doGenerate, params }) => {
       const messages = params.prompt as CoreMessage[];
       const lastUserMessage = messages?.findLast(
-        (msg: CoreMessage) => msg.role === 'user'
+        (msg: CoreMessage) => msg.role === 'user',
       );
 
       if (!lastUserMessage) {
         return doGenerate();
       }
 
-      const textContent = Array.isArray(lastUserMessage.content) 
+      const textContent = Array.isArray(lastUserMessage.content)
         ? lastUserMessage.content
-            .filter(item => item.type === 'text')
-            .map(item => (item as any).text)
+            .filter((item) => item.type === 'text')
+            .map((item) => (item as any).text)
             .join(' ')
         : String(lastUserMessage.content);
 
       let promptValidation: ValidationResult | undefined = undefined;
       try {
-        const providerMetadata = params.providerMetadata as Record<string, any> | undefined;
+        const providerMetadata = params.providerMetadata as
+          | Record<string, any>
+          | undefined;
         promptValidation = await arthurAPI.validatePrompt(taskId, {
           prompt: textContent,
-          conversation_id: providerMetadata?.conversationId as string || undefined,
-          user_id: providerMetadata?.userId as string || undefined,
+          conversation_id:
+            (providerMetadata?.conversationId as string) || undefined,
+          user_id: (providerMetadata?.userId as string) || undefined,
         });
-        
+
         const ruleFailures = promptValidation.rule_results?.filter(
-          rule => rule.result === 'Fail' && (rule.rule_type === 'PIIDataRule' || rule.rule_type === 'ToxicityRule')
+          (rule) =>
+            rule.result === 'Fail' &&
+            (rule.rule_type === 'PIIDataRule' ||
+              rule.rule_type === 'ToxicityRule'),
         );
 
         if (ruleFailures && ruleFailures.length > 0) {
@@ -67,7 +83,7 @@ function createArthurGuardrailsMiddleware(
             {
               response: result.text,
               context: textContent,
-            }
+            },
           );
         } catch (error) {
           console.error('Arthur PII response validation error:', error);
@@ -80,31 +96,37 @@ function createArthurGuardrailsMiddleware(
     wrapStream: async ({ doStream, params }) => {
       const messages = params.prompt as CoreMessage[];
       const lastUserMessage = messages?.findLast(
-        (msg: CoreMessage) => msg.role === 'user'
+        (msg: CoreMessage) => msg.role === 'user',
       );
 
       if (!lastUserMessage) {
         return doStream();
       }
 
-      const textContent = Array.isArray(lastUserMessage.content) 
+      const textContent = Array.isArray(lastUserMessage.content)
         ? lastUserMessage.content
-            .filter(item => item.type === 'text')
-            .map(item => (item as any).text)
+            .filter((item) => item.type === 'text')
+            .map((item) => (item as any).text)
             .join(' ')
         : String(lastUserMessage.content);
 
       let promptValidation: ValidationResult | undefined = undefined;
       try {
-        const providerMetadata = params.providerMetadata as Record<string, any> | undefined;
+        const providerMetadata = params.providerMetadata as
+          | Record<string, any>
+          | undefined;
         promptValidation = await arthurAPI.validatePrompt(taskId, {
           prompt: textContent,
-          conversation_id: providerMetadata?.conversationId as string || undefined,
-          user_id: providerMetadata?.userId as string || undefined,
+          conversation_id:
+            (providerMetadata?.conversationId as string) || undefined,
+          user_id: (providerMetadata?.userId as string) || undefined,
         });
-        
+
         const ruleFailures = promptValidation.rule_results?.filter(
-          rule => rule.result === 'Fail' && (rule.rule_type === 'PIIDataRule' || rule.rule_type === 'ToxicityRule')
+          (rule) =>
+            rule.result === 'Fail' &&
+            (rule.rule_type === 'PIIDataRule' ||
+              rule.rule_type === 'ToxicityRule'),
         );
 
         if (ruleFailures && ruleFailures.length > 0) {
@@ -112,12 +134,13 @@ function createArthurGuardrailsMiddleware(
             start(controller) {
               const words = blockMessage.split(' ');
               let index = 0;
-              
+
               const sendNextWord = () => {
                 if (index < words.length) {
                   controller.enqueue({
                     type: 'text-delta',
-                    textDelta: words[index] + (index < words.length - 1 ? ' ' : ''),
+                    textDelta:
+                      words[index] + (index < words.length - 1 ? ' ' : ''),
                   });
                   index++;
                   setTimeout(sendNextWord, 50);
@@ -130,7 +153,7 @@ function createArthurGuardrailsMiddleware(
                   controller.close();
                 }
               };
-              
+
               sendNextWord();
             },
           });
@@ -158,20 +181,22 @@ function createArthurGuardrailsMiddleware(
             generatedText += chunk.textDelta;
           }
 
-          if (chunk.type === 'finish' && !hasValidatedResponse && promptValidation?.inference_id) {
+          if (
+            chunk.type === 'finish' &&
+            !hasValidatedResponse &&
+            promptValidation?.inference_id
+          ) {
             hasValidatedResponse = true;
 
-            arthurAPI.validateResponse(
-              taskId,
-              promptValidation.inference_id,
-              {
+            arthurAPI
+              .validateResponse(taskId, promptValidation.inference_id, {
                 response: generatedText,
                 context: textContent,
-              }
-            ).then(() => {
-            }).catch(error => {
-              console.error('Arthur PII response validation error:', error);
-            });
+              })
+              .then(() => {})
+              .catch((error) => {
+                console.error('Arthur PII response validation error:', error);
+              });
           }
 
           controller.enqueue(chunk);
@@ -184,11 +209,12 @@ function createArthurGuardrailsMiddleware(
       };
     },
   };
-} 
+}
 
 export const arthurGuardrails = createArthurGuardrailsMiddleware({
   taskId: process.env.ARTHUR_MODEL_ID!,
   apiKey: process.env.ARTHUR_API_KEY,
   baseUrl: process.env.ARTHUR_API_BASE,
-  blockMessage: "Your the message was blocked due to organization security policies",
+  blockMessage:
+    'Your the message was blocked due to organization security policies',
 });
