@@ -12,7 +12,9 @@ import {
   titleModel,
 } from './models.test';
 import { arthurValidation } from './middleware/arthur-validation';
-import { arthurPIIBlocking } from './middleware/arthur-pii-blocking';
+import { arthurGuardrails } from './middleware/arthur-guardrails';
+
+const useGuardrails = process.env.ARTHUR_USE_GUARDRAILS === 'true';
 
 export const myProvider = isTestEnvironment
   ? customProvider({
@@ -25,18 +27,15 @@ export const myProvider = isTestEnvironment
     })
   : customProvider({
       languageModels: {
-        // Arthur validation middleware example
+        // Arthur guardrails middleware example
         'chat-model': wrapLanguageModel({
           model: xai('grok-2-vision-1212'),
-          // Use arthurValidation for observational logging (recommended for debugging)
-          // middleware: arthurValidation,
-          // Use arthurPIIBlocking for PII blocking with response logging
-          middleware: arthurPIIBlocking,
+          middleware: useGuardrails ? arthurGuardrails : arthurValidation,
         }),
 
         'chat-model-reasoning': wrapLanguageModel({
           model: xai('grok-3-mini-beta'),
-          middleware: [extractReasoningMiddleware({ tagName: 'think' }), arthurPIIBlocking],
+          middleware: [extractReasoningMiddleware({ tagName: 'think' }), useGuardrails ? arthurGuardrails : arthurValidation],
         }),
         'title-model': xai('grok-2-1212'),
         'artifact-model': wrapLanguageModel({
