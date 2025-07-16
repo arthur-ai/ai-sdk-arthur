@@ -8,7 +8,7 @@ interface ArthurPIIBlockingMiddlewareOptions {
   blockMessage?: string;
 }
 
-function createArthurGuardrailsMiddleware(
+export function createArthurGuardrailsMiddleware(
   options: ArthurPIIBlockingMiddlewareOptions
 ): LanguageModelV1Middleware {
   const { taskId, apiKey, baseUrl, blockMessage = "Your message may contain sensitive data - sending message failed" } = options;
@@ -187,7 +187,7 @@ function createArthurGuardrailsMiddleware(
 } 
 
 export const arthurGuardrails = createArthurGuardrailsMiddleware({
-  taskId: process.env.ARTHUR_TASK_ID!,
+  taskId: process.env.ARTHUR_MODEL_ID!,
   apiKey: process.env.ARTHUR_API_KEY,
   baseUrl: process.env.ARTHUR_API_BASE,
   blockMessage: "Your the message was blocked due to organization security policies",
