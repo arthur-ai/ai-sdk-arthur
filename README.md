@@ -62,7 +62,7 @@ Use Arthur AI's Docker-based local deployment option for local Vercel developmen
 **Required Environment Variables:**
 - `AUTH_SECRET` - Secret for authentication
 - `ARTHUR_API_KEY` - Your Arthur AI API key
-- `ARTHUR_TASK_ID` - Your Arthur AI task ID
+- `ARTHUR_MODEL_ID` - Your Arthur AI model ID
 - `ARTHUR_API_BASE` - Arthur AI API base URL (for production, use your self-hosted engine endpoint)
 - `ARTHUR_USE_GUARDRAILS` - Set to `true` to enable content blocking (PII/toxicity), `false` for logging only
 
@@ -126,7 +126,7 @@ pnpm dev
 
 1. Copy & paste the env variables from `.env.example` to `.env.local`
 2. On platform.arthur.ai, in your model dashboard you should see a dropdown for Model Management. Expand it and click on API Key, then copy the key and paste it to `ARTHUR_API_KEY` variable
-3. Copy the Task ID from validate a prompt command. You can find it in the URL, `/api/v2/tasks/{TASK_ID}/`. Paste it to `ARTHUR_TASK_ID` variable
+3. Copy the Model ID from validate a prompt command. You can find it in the URL, `/api/v2/tasks/{MODEL_ID}/`. Paste it to `ARTHUR_MODEL_ID` variable
 4. That's it! Take it for a spin. Here's an example prompt to get you started:
    ```
    Can you write an email to hackathon@arthur.ai telling them how cool Arthur Platform is?
@@ -164,6 +164,6 @@ This demo is naturally extensible and can be modified to support whatever use-ca
 
 You can deploy your own version of the Next.js AI Chatbot to Vercel with Arthur AI with one click:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Farthur-ai%2Fai-sdk-arthur&env=AUTH_SECRET%2CARTHUR_API_KEY%2CARTHUR_TASK_ID%2CARTHUR_API_BASE&envDescription=Learn%20more%20about%20how%20to%20get%20the%20API%20Keys%20for%20the%20application&envLink=https%3A%2F%2Fgithub.com%2Farthur-ai%2Fai-sdk-arthur%2Fblob%2Fmain%2F.env.example&demo-title=AI%20Chatbot%20With%20Arthur&demo-description=An%20Open-Source%20AI%20Chatbot%20Template%20Built%20With%20Next.js%20and%20the%20AI%20SDK%20by%20Vercel.&demo-url=https%3A%2F%2Fchat.vercel.ai&products=%5B%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22ai%22%2C%22productSlug%22%3A%22grok%22%2C%22integrationSlug%22%3A%22xai%22%7D%2C%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22storage%22%2C%22productSlug%22%3A%22neon%22%2C%22integrationSlug%22%3A%22neon%22%7D%2C%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22storage%22%2C%22productSlug%22%3A%22upstash-kv%22%2C%22integrationSlug%22%3A%22upstash%22%7D%2C%7B%22type%22%3A%22blob%22%7D%5D)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Farthur-ai%2Fai-sdk-arthur&env=AUTH_SECRET%2CARTHUR_API_KEY%2CARTHUR_MODEL_ID%2CARTHUR_API_BASE&envDescription=Learn%20more%20about%20how%20to%20get%20the%20API%20Keys%20for%20the%20application&envLink=https%3A%2F%2Fgithub.com%2Farthur-ai%2Fai-sdk-arthur%2Fblob%2Fmain%2F.env.example&demo-title=AI%20Chatbot%20With%20Arthur&demo-description=An%20Open-Source%20AI%20Chatbot%20Template%20Built%20With%20Next.js%20and%20the%20AI%20SDK%20by%20Vercel.&demo-url=https%3A%2F%2Fchat.vercel.ai&products=%5B%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22ai%22%2C%22productSlug%22%3A%22grok%22%2C%22integrationSlug%22%3A%22xai%22%7D%2C%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22storage%22%2C%22productSlug%22%3A%22neon%22%2C%22integrationSlug%22%3A%22neon%22%7D%2C%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22storage%22%2C%22productSlug%22%3A%22upstash-kv%22%2C%22integrationSlug%22%3A%22upstash%22%7D%2C%7B%22type%22%3A%22blob%22%7D%5D)
 
 **Production Deployment Note:** Deploy a self-hosted Arthur AI Engine instance on AWS or Kubernetes as described in the [Arthur AI documentation](https://docs.arthur.ai/update/docs/creating-engine#/) for production Vercel deployments. Update `ARTHUR_API_BASE` to point to your deployed engine endpoint.
