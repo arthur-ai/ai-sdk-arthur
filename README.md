@@ -111,13 +111,13 @@ In today's AI-powered applications, **safety and compliance are not optional** -
 - **Compliance Violations**: Failure to meet regulatory requirements (GDPR, HIPAA, etc.)
 - **Reputational Damage**: AI responses that don't align with your brand values
 
-## Arthur Platform: Active AI Safety Enforcement
+## The Arthur Platform: Active AI Safety Enforcement
 
-The [Arthur Platform](https://arthur.ai) provides **enterprise-grade AI safety** that goes beyond simple content filtering. It actively enforces guardrails in real-time, ensuring your AI applications remain safe, compliant, and trustworthy.
+The [Arthur Platform](https://arthur.ai) provides **enterprise-grade AI safety** that goes beyond simple content filtering. It actively enforces guardrails in real-time, ensuring your AI applications remain safe, compliant, and trustworthy to help you scale with confidence.
 
-### Arthur Engine Capabilities
+### Arthur GenAI Engine Capabilities
 
-The Arthur Engine provides comprehensive AI safety through five core detection systems:
+The Arthur GenAI Engine provides comprehensive AI safety through five core detection systems:
 
 - **🔒 PII Detection**: Automatically identifies and blocks sensitive personal information (SSN, email, phone, credit cards, etc.)
 - **🚫 Toxicity Detection**: Filters harmful content and inappropriate responses
