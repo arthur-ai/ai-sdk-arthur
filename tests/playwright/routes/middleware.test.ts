@@ -1,6 +1,5 @@
 import { generateUUID } from '@/lib/utils';
 import { expect, test } from '../fixtures';
-import { getMessageByErrorCode } from '@/lib/errors';
 
 test.describe('/api/chat with middleware', () => {
   test('should block messages containing PII when guardrails are enabled', async ({

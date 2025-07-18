@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createArthurGuardrailsMiddleware } from '@/lib/ai/middleware/arthur-guardrails';
+import { createArthurGuardrailsMiddleware } from '../../../../lib/ai/middleware/arthur-guardrails';
 
 // Mock the Arthur API
-vi.mock('@/lib/ai/arthur-api', () => ({
+vi.mock('../../../../lib/ai/arthur-api', () => ({
   createArthurAPI: vi.fn(() => ({
     validatePrompt: vi.fn(),
     validateResponse: vi.fn(),
@@ -14,7 +14,7 @@ describe('Arthur Guardrails Middleware', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    const { createArthurAPI } = await import('@/lib/ai/arthur-api');
+    const { createArthurAPI } = await import('../../../../lib/ai/arthur-api');
     mockCreateArthurAPI = vi.mocked(createArthurAPI);
   });
 

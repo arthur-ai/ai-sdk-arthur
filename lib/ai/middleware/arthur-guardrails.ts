@@ -3,7 +3,7 @@ import type {
   LanguageModelV1StreamPart,
   CoreMessage,
 } from 'ai';
-import { createArthurAPI, ValidationResult } from '../arthur-api';
+import { createArthurAPI, type ValidationResult } from '../arthur-api';
 
 interface ArthurPIIBlockingMiddlewareOptions {
   taskId: string;
@@ -241,7 +241,7 @@ export function createArthurGuardrailsMiddleware(
 }
 
 export const arthurGuardrails = createArthurGuardrailsMiddleware({
-  taskId: process.env.ARTHUR_MODEL_ID!,
+  taskId: process.env.ARTHUR_MODEL_ID ?? '',
   apiKey: process.env.ARTHUR_API_KEY,
   baseUrl: process.env.ARTHUR_API_BASE,
   blockMessage:

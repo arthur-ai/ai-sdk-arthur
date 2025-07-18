@@ -4,7 +4,6 @@ import {
   createDataStream,
   smoothStream,
   streamText,
-  wrapLanguageModel,
 } from 'ai';
 import { auth, type UserType } from '@/app/(auth)/auth';
 import { type RequestHints, systemPrompt } from '@/lib/ai/prompts';
