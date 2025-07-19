@@ -46,12 +46,12 @@ pnpm install
 
 ### Engine Connection Problems
 
-**Arthur Engine not responding?**
+**Arthur GenAI Engine not responding?**
 ```bash
 # Check if Docker container is running
 docker ps | grep arthur
 
-# Restart Arthur Engine
+# Restart Arthur GenAI Engine
 docker restart arthur-engine
 
 # Check logs
@@ -76,7 +76,7 @@ docker logs arthur-engine
 **PII not being blocked?**
 - Verify `ARTHUR_USE_GUARDRAILS=true`
 - Check PII metric is applied to "Prompt only"
-- Ensure Arthur Engine is running and accessible
+- Ensure Arthur GenAI Engine is running and accessible
 - Test with known PII: `My SSN is 123-45-6789`
 
 **Too many false positives?**
@@ -224,7 +224,7 @@ pnpm exec eslint app/page.tsx
 ### Slow Response Times
 
 **Chat responses slow?**
-- Check Arthur Engine performance
+- Check Arthur GenAI Engine performance
 - Monitor network latency to Arthur API
 - Consider caching frequently used validations
 
@@ -237,7 +237,7 @@ pnpm exec eslint app/page.tsx
 
 **High memory usage?**
 - Check for memory leaks in middleware
-- Monitor Arthur Engine resource usage
+- Monitor Arthur GenAI Engine resource usage
 - Consider implementing request timeouts
 
 ## Security Issues
@@ -257,7 +257,7 @@ pnpm exec eslint app/page.tsx
 ### Content Security
 
 **PII leaking through?**
-- Verify Arthur Engine is running
+- Verify Arthur GenAI Engine is running
 - Check middleware is properly configured
 - Review blocked content logs
 
@@ -274,7 +274,7 @@ DEBUG=* pnpm dev
 DEBUG=arthur:* pnpm dev
 ```
 
-**Check Arthur Engine logs?**
+**Check Arthur GenAI Engine logs?**
 ```bash
 # Docker logs
 docker logs arthur-engine
@@ -287,7 +287,7 @@ docker logs -f arthur-engine
 
 **Common error patterns:**
 - `MissingSecret`: Set `AUTH_SECRET`
-- `Connection refused`: Arthur Engine not running
+- `Connection refused`: Arthur GenAI Engine not running
 - `Invalid API key`: Check `ARTHUR_API_KEY`
 - `Model not found`: Verify `ARTHUR_MODEL_ID`
 
@@ -319,7 +319,7 @@ Include the following information:
 
 1. **Keep dependencies updated**: `pnpm update`
 2. **Run tests regularly**: `pnpm test:unit && pnpm test:e2e`
-3. **Monitor Arthur Engine**: Check logs periodically
+3. **Monitor Arthur GenAI Engine**: Check logs periodically
 4. **Backup configuration**: Keep `.env.local` backed up
 5. **Document customizations**: Note any changes to default settings
 
