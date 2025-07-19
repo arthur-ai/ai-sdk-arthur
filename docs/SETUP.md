@@ -6,7 +6,7 @@ This guide provides detailed instructions for setting up the Chat SDK with Arthu
 
 - Node.js 18+ 
 - pnpm (recommended) or npm
-- Docker (for local Arthur Engine)
+- Docker (for local Arthur GenAI Engine)
 - Git
 
 ## Quick Setup
@@ -68,7 +68,7 @@ Visit [localhost:3000](http://localhost:3000) to see your application.
 
 ### Production Deployment
 
-For production, deploy a self-hosted Arthur Engine:
+For production, deploy a self-hosted Arthur GenAI Engine:
 
 1. **AWS Deployment**: Follow [Arthur AI AWS guide](https://docs.arthur.ai/update/docs/creating-engine#aws)
 2. **Kubernetes**: Follow [Arthur AI K8s guide](https://docs.arthur.ai/update/docs/creating-engine#kubernetes)
@@ -156,7 +156,7 @@ pnpm test:unit && pnpm test:e2e
 - Restart development server after changes
 - Check for typos in variable names
 
-### Arthur Engine Connection
+### Arthur GenAI Engine Connection
 - Verify Docker container is running: `docker ps`
 - Check `ARTHUR_API_BASE` points to correct endpoint
 - Validate API key in Arthur Platform dashboard

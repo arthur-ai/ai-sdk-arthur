@@ -4,7 +4,7 @@
 </a>
 
 <p align="center">
-    Chat SDK is a free, open-source template built with Next.js and the AI SDK that helps you quickly build powerful chatbot applications protected by The Arthur Engine, an enterprise-grade AI safety and content filtering.
+    Chat SDK is a free, open-source template built with Next.js and the AI SDK that helps you quickly build powerful chatbot applications protected by The Arthur GenAI Engine, an enterprise-grade AI safety and content filtering.
 </p>
 
 <p align="center">
@@ -180,7 +180,7 @@ The Arthur Platform provides enterprise-grade AI safety with real-time content f
 
 **Quick Setup:**
 1. Sign up at [platform.arthur.ai/signup](https://platform.arthur.ai/signup)
-2. Deploy the Arthur Engine locally or in production
+2. Deploy the Arthur GenAI Engine locally or in production
 3. Configure your safety metrics and model
 4. Add your API credentials to environment variables
 

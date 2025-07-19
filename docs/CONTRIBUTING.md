@@ -9,7 +9,7 @@ Thank you for your interest in contributing to the Chat SDK with Arthur AI proje
 - Node.js 18+
 - pnpm (recommended) or npm
 - Git
-- Docker (for local Arthur Engine)
+- Docker (for local Arthur GenAI Engine)
 
 ### Development Setup
 
