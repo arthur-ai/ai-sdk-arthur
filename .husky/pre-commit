@@ -1,1 +1,5 @@
+# Run next lint on the entire project first
+pnpm next lint --fix
+
+# Then run lint-staged for formatting
 pnpm lint-staged

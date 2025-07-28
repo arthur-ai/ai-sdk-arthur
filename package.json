@@ -128,11 +128,7 @@
     "vitest": "^3.2.4"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "biome format --write",
-      "biome lint --write --unsafe"
-    ],
-    "*.{json,md,yml,yaml}": ["biome format --write"]
+    "*": ["biome format --write", "biome lint --write --unsafe"]
   },
   "packageManager": "pnpm@9.12.3"
 }
