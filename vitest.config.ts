@@ -14,4 +14,7 @@ export default defineConfig({
       '@': resolve(__dirname, './'),
     },
   },
+  esbuild: {
+    target: 'node18',
+  },
 });
