@@ -19,7 +19,8 @@
     "test:e2e": "export PLAYWRIGHT=True && pnpm exec playwright test tests/playwright",
     "test:unit": "vitest",
     "test:unit:ui": "vitest --ui",
-    "test:ci": "pnpm test:e2e"
+    "test:ci": "pnpm test:e2e",
+    "prepare": "husky"
   },
   "dependencies": {
     "@ai-sdk/react": "^1.2.11",
@@ -93,6 +94,10 @@
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@eslint/js": "^9.32.0",
+    "@next/eslint-plugin-next": "^15.4.4",
     "@playwright/test": "^1.50.1",
     "@tailwindcss/typography": "^0.5.15",
     "@testing-library/jest-dom": "^6.6.3",
@@ -113,12 +118,21 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-import-resolver-typescript": "^3.10.1",
     "eslint-plugin-tailwindcss": "^3.18.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
     "node-fetch": "^3.3.2",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.19.1",
     "typescript": "^5.6.3",
     "vitest": "^3.2.4"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "biome format --write",
+      "biome lint --write --unsafe"
+    ],
+    "*.{json,md,yml,yaml}": ["biome format --write"]
   },
   "packageManager": "pnpm@9.12.3"
 }

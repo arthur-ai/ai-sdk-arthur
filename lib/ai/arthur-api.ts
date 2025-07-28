@@ -21,7 +21,10 @@ export interface TokenUsageResponse {
 
 export type TokenUsageScope = 'rule_type' | 'task';
 
-export type InferenceFeedbackTarget = 'context' | 'response_results' | 'prompt_results';
+export type InferenceFeedbackTarget =
+  | 'context'
+  | 'response_results'
+  | 'prompt_results';
 
 export interface FeedbackRequest {
   target: InferenceFeedbackTarget;
@@ -49,7 +52,7 @@ export interface QueryFeedbackResponse {
   total_count: number;
 }
 
-export type RuleType = 
+export type RuleType =
   | 'KeywordRule'
   | 'ModelHallucinationRuleV2'
   | 'ModelSensitiveDataRule'
@@ -58,7 +61,7 @@ export type RuleType =
   | 'RegexRule'
   | 'ToxicityRule';
 
-export type RuleResultEnum = 
+export type RuleResultEnum =
   | 'Pass'
   | 'Fail'
   | 'Skipped'
@@ -155,7 +158,13 @@ export interface NewRuleRequest {
   type: RuleType;
   apply_to_prompt: boolean;
   apply_to_response: boolean;
-  config?: KeywordsConfig | RegexConfig | ExamplesConfig | ToxicityConfig | PIIConfig | null;
+  config?:
+    | KeywordsConfig
+    | RegexConfig
+    | ExamplesConfig
+    | ToxicityConfig
+    | PIIConfig
+    | null;
 }
 
 export interface RuleResponse {
@@ -168,7 +177,13 @@ export interface RuleResponse {
   scope: RuleScope;
   created_at: number;
   updated_at: number;
-  config?: KeywordsConfig | RegexConfig | ExamplesConfig | ToxicityConfig | PIIConfig | null;
+  config?:
+    | KeywordsConfig
+    | RegexConfig
+    | ExamplesConfig
+    | ToxicityConfig
+    | PIIConfig
+    | null;
 }
 
 export interface NewTaskRequest {
@@ -227,7 +242,7 @@ export interface ValidationResult {
   user_id?: string | null;
 }
 
-export type APIKeysRolesEnum = 
+export type APIKeysRolesEnum =
   | 'DEFAULT-RULE-ADMIN'
   | 'TASK-ADMIN'
   | 'VALIDATION-USER'
@@ -339,23 +354,26 @@ export class ArthurAPI {
   constructor(apiKey?: string, baseUrl?: string) {
     // Use provided parameters or fall back to environment variables
     this.apiKey = apiKey || process.env.ARTHUR_API_KEY || '';
-    this.baseUrl = baseUrl || process.env.ARTHUR_API_BASE || 'https://api.arthur.ai';
-    
+    this.baseUrl =
+      baseUrl || process.env.ARTHUR_API_BASE || 'https://api.arthur.ai';
+
     // Validate that we have an API key
     if (!this.apiKey) {
-      throw new Error('ARTHUR_API_KEY is required. Please set the ARTHUR_API_KEY environment variable or pass it as a parameter.');
+      throw new Error(
+        'ARTHUR_API_KEY is required. Please set the ARTHUR_API_KEY environment variable or pass it as a parameter.',
+      );
     }
   }
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     const config: RequestInit = {
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
+        Authorization: `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
         ...options.headers,
       },
@@ -363,7 +381,7 @@ export class ArthurAPI {
     };
 
     const response = await fetch(url, config);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
@@ -372,121 +390,161 @@ export class ArthurAPI {
   }
 
   // Usage endpoints
-  async getTokenUsage(params?: TokenUsageQueryParams): Promise<TokenUsageResponse[]> {
+  async getTokenUsage(
+    params?: TokenUsageQueryParams,
+  ): Promise<TokenUsageResponse[]> {
     const searchParams = new URLSearchParams();
-    
-    if (params?.start_time) searchParams.append('start_time', params.start_time);
+
+    if (params?.start_time)
+      searchParams.append('start_time', params.start_time);
     if (params?.end_time) searchParams.append('end_time', params.end_time);
     if (params?.group_by) {
-      params.group_by.forEach(scope => searchParams.append('group_by', scope));
+      params.group_by.forEach((scope) =>
+        searchParams.append('group_by', scope),
+      );
     }
 
     const queryString = searchParams.toString();
     const endpoint = `/api/v2/usage/tokens${queryString ? `?${queryString}` : ''}`;
-    
+
     return this.request<TokenUsageResponse[]>(endpoint);
   }
 
   // Feedback endpoints
-  async postFeedback(inferenceId: string, feedback: FeedbackRequest): Promise<InferenceFeedbackResponse> {
-    return this.request<InferenceFeedbackResponse>(`/api/v2/feedback/${inferenceId}`, {
-      method: 'POST',
-      body: JSON.stringify(feedback),
-    });
+  async postFeedback(
+    inferenceId: string,
+    feedback: FeedbackRequest,
+  ): Promise<InferenceFeedbackResponse> {
+    return this.request<InferenceFeedbackResponse>(
+      `/api/v2/feedback/${inferenceId}`,
+      {
+        method: 'POST',
+        body: JSON.stringify(feedback),
+      },
+    );
   }
 
-  async queryFeedback(params?: FeedbackQueryParams): Promise<QueryFeedbackResponse> {
+  async queryFeedback(
+    params?: FeedbackQueryParams,
+  ): Promise<QueryFeedbackResponse> {
     const searchParams = new URLSearchParams();
-    
-    if (params?.start_time) searchParams.append('start_time', params.start_time);
+
+    if (params?.start_time)
+      searchParams.append('start_time', params.start_time);
     if (params?.end_time) searchParams.append('end_time', params.end_time);
     if (params?.feedback_id) {
       if (Array.isArray(params.feedback_id)) {
-        params.feedback_id.forEach(id => searchParams.append('feedback_id', id));
+        params.feedback_id.forEach((id) =>
+          searchParams.append('feedback_id', id),
+        );
       } else {
         searchParams.append('feedback_id', params.feedback_id);
       }
     }
     if (params?.inference_id) {
       if (Array.isArray(params.inference_id)) {
-        params.inference_id.forEach(id => searchParams.append('inference_id', id));
+        params.inference_id.forEach((id) =>
+          searchParams.append('inference_id', id),
+        );
       } else {
         searchParams.append('inference_id', params.inference_id);
       }
     }
     if (params?.target) {
       if (Array.isArray(params.target)) {
-        params.target.forEach(t => searchParams.append('target', t));
+        params.target.forEach((t) => searchParams.append('target', t));
       } else {
         searchParams.append('target', params.target);
       }
     }
     if (params?.score !== undefined) {
       if (Array.isArray(params.score)) {
-        params.score.forEach(s => searchParams.append('score', s.toString()));
+        params.score.forEach((s) => searchParams.append('score', s.toString()));
       } else if (params.score !== null) {
         searchParams.append('score', params.score.toString());
       }
     }
-    if (params?.feedback_user_id) searchParams.append('feedback_user_id', params.feedback_user_id);
+    if (params?.feedback_user_id)
+      searchParams.append('feedback_user_id', params.feedback_user_id);
     if (params?.conversation_id) {
       if (Array.isArray(params.conversation_id)) {
-        params.conversation_id.forEach(id => searchParams.append('conversation_id', id));
+        params.conversation_id.forEach((id) =>
+          searchParams.append('conversation_id', id),
+        );
       } else {
         searchParams.append('conversation_id', params.conversation_id);
       }
     }
     if (params?.task_id) {
       if (Array.isArray(params.task_id)) {
-        params.task_id.forEach(id => searchParams.append('task_id', id));
+        params.task_id.forEach((id) => searchParams.append('task_id', id));
       } else {
         searchParams.append('task_id', params.task_id);
       }
     }
-    if (params?.inference_user_id) searchParams.append('inference_user_id', params.inference_user_id);
+    if (params?.inference_user_id)
+      searchParams.append('inference_user_id', params.inference_user_id);
     if (params?.sort) searchParams.append('sort', params.sort);
-    if (params?.page_size) searchParams.append('page_size', params.page_size.toString());
-    if (params?.page !== undefined) searchParams.append('page', params.page.toString());
+    if (params?.page_size)
+      searchParams.append('page_size', params.page_size.toString());
+    if (params?.page !== undefined)
+      searchParams.append('page', params.page.toString());
 
     const queryString = searchParams.toString();
     const endpoint = `/api/v2/feedback/query${queryString ? `?${queryString}` : ''}`;
-    
+
     return this.request<QueryFeedbackResponse>(endpoint);
   }
 
   // Inferences endpoints
-  async queryInferences(params?: InferencesQueryParams): Promise<QueryInferencesResponse> {
+  async queryInferences(
+    params?: InferencesQueryParams,
+  ): Promise<QueryInferencesResponse> {
     const searchParams = new URLSearchParams();
-    
+
     if (params?.task_ids) {
-      params.task_ids.forEach(id => searchParams.append('task_ids', id));
+      params.task_ids.forEach((id) => searchParams.append('task_ids', id));
     }
     if (params?.task_name) searchParams.append('task_name', params.task_name);
-    if (params?.conversation_id) searchParams.append('conversation_id', params.conversation_id);
-    if (params?.inference_id) searchParams.append('inference_id', params.inference_id);
+    if (params?.conversation_id)
+      searchParams.append('conversation_id', params.conversation_id);
+    if (params?.inference_id)
+      searchParams.append('inference_id', params.inference_id);
     if (params?.user_id) searchParams.append('user_id', params.user_id);
-    if (params?.start_time) searchParams.append('start_time', params.start_time);
+    if (params?.start_time)
+      searchParams.append('start_time', params.start_time);
     if (params?.end_time) searchParams.append('end_time', params.end_time);
     if (params?.rule_types) {
-      params.rule_types.forEach(type => searchParams.append('rule_types', type));
+      params.rule_types.forEach((type) =>
+        searchParams.append('rule_types', type),
+      );
     }
     if (params?.rule_statuses) {
-      params.rule_statuses.forEach(status => searchParams.append('rule_statuses', status));
+      params.rule_statuses.forEach((status) =>
+        searchParams.append('rule_statuses', status),
+      );
     }
     if (params?.prompt_statuses) {
-      params.prompt_statuses.forEach(status => searchParams.append('prompt_statuses', status));
+      params.prompt_statuses.forEach((status) =>
+        searchParams.append('prompt_statuses', status),
+      );
     }
     if (params?.response_statuses) {
-      params.response_statuses.forEach(status => searchParams.append('response_statuses', status));
+      params.response_statuses.forEach((status) =>
+        searchParams.append('response_statuses', status),
+      );
     }
-    if (params?.include_count !== undefined) searchParams.append('include_count', params.include_count.toString());
+    if (params?.include_count !== undefined)
+      searchParams.append('include_count', params.include_count.toString());
     if (params?.sort) searchParams.append('sort', params.sort);
-    if (params?.page_size) searchParams.append('page_size', params.page_size.toString());
-    if (params?.page !== undefined) searchParams.append('page', params.page.toString());
+    if (params?.page_size)
+      searchParams.append('page_size', params.page_size.toString());
+    if (params?.page !== undefined)
+      searchParams.append('page', params.page.toString());
 
     const queryString = searchParams.toString();
     const endpoint = `/api/v2/inferences/query${queryString ? `?${queryString}` : ''}`;
-    
+
     return this.request<QueryInferencesResponse>(endpoint);
   }
 
@@ -510,17 +568,19 @@ export class ArthurAPI {
 
   async searchRules(
     searchRequest: SearchRulesRequest,
-    params?: RulesSearchQueryParams
+    params?: RulesSearchQueryParams,
   ): Promise<SearchRulesResponse> {
     const searchParams = new URLSearchParams();
-    
+
     if (params?.sort) searchParams.append('sort', params.sort);
-    if (params?.page_size) searchParams.append('page_size', params.page_size.toString());
-    if (params?.page !== undefined) searchParams.append('page', params.page.toString());
+    if (params?.page_size)
+      searchParams.append('page_size', params.page_size.toString());
+    if (params?.page !== undefined)
+      searchParams.append('page', params.page.toString());
 
     const queryString = searchParams.toString();
     const endpoint = `/api/v2/rules/search${queryString ? `?${queryString}` : ''}`;
-    
+
     return this.request<SearchRulesResponse>(endpoint, {
       method: 'POST',
       body: JSON.stringify(searchRequest),
@@ -537,17 +597,19 @@ export class ArthurAPI {
 
   async searchTasks(
     searchRequest: SearchTasksRequest,
-    params?: TasksSearchQueryParams
+    params?: TasksSearchQueryParams,
   ): Promise<SearchTasksResponse> {
     const searchParams = new URLSearchParams();
-    
+
     if (params?.sort) searchParams.append('sort', params.sort);
-    if (params?.page_size) searchParams.append('page_size', params.page_size.toString());
-    if (params?.page !== undefined) searchParams.append('page', params.page.toString());
+    if (params?.page_size)
+      searchParams.append('page_size', params.page_size.toString());
+    if (params?.page !== undefined)
+      searchParams.append('page', params.page.toString());
 
     const queryString = searchParams.toString();
     const endpoint = `/api/v2/tasks/search${queryString ? `?${queryString}` : ''}`;
-    
+
     return this.request<SearchTasksResponse>(endpoint, {
       method: 'POST',
       body: JSON.stringify(searchRequest),
@@ -564,18 +626,28 @@ export class ArthurAPI {
     });
   }
 
-  async createTaskRule(taskId: string, rule: NewRuleRequest): Promise<RuleResponse> {
+  async createTaskRule(
+    taskId: string,
+    rule: NewRuleRequest,
+  ): Promise<RuleResponse> {
     return this.request<RuleResponse>(`/api/v2/tasks/${taskId}/rules`, {
       method: 'POST',
       body: JSON.stringify(rule),
     });
   }
 
-  async updateTaskRule(taskId: string, ruleId: string, update: UpdateRuleRequest): Promise<TaskResponse> {
-    return this.request<TaskResponse>(`/api/v2/tasks/${taskId}/rules/${ruleId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(update),
-    });
+  async updateTaskRule(
+    taskId: string,
+    ruleId: string,
+    update: UpdateRuleRequest,
+  ): Promise<TaskResponse> {
+    return this.request<TaskResponse>(
+      `/api/v2/tasks/${taskId}/rules/${ruleId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(update),
+      },
+    );
   }
 
   async archiveTaskRule(taskId: string, ruleId: string): Promise<void> {
@@ -585,22 +657,31 @@ export class ArthurAPI {
   }
 
   // Task-based validation endpoints
-  async validatePrompt(taskId: string, request: PromptValidationRequest): Promise<ValidationResult> {
-    return this.request<ValidationResult>(`/api/v2/tasks/${taskId}/validate_prompt`, {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
+  async validatePrompt(
+    taskId: string,
+    request: PromptValidationRequest,
+  ): Promise<ValidationResult> {
+    return this.request<ValidationResult>(
+      `/api/v2/tasks/${taskId}/validate_prompt`,
+      {
+        method: 'POST',
+        body: JSON.stringify(request),
+      },
+    );
   }
 
   async validateResponse(
     taskId: string,
     inferenceId: string,
-    request: ResponseValidationRequest
+    request: ResponseValidationRequest,
   ): Promise<ValidationResult> {
-    return this.request<ValidationResult>(`/api/v2/tasks/${taskId}/validate_response/${inferenceId}`, {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
+    return this.request<ValidationResult>(
+      `/api/v2/tasks/${taskId}/validate_response/${inferenceId}`,
+      {
+        method: 'POST',
+        body: JSON.stringify(request),
+      },
+    );
   }
 
   // API Keys endpoints
@@ -620,9 +701,12 @@ export class ArthurAPI {
   }
 
   async deactivateApiKey(apiKeyId: string): Promise<ApiKeyResponse> {
-    return this.request<ApiKeyResponse>(`/auth/api_keys/deactivate/${apiKeyId}`, {
-      method: 'DELETE',
-    });
+    return this.request<ApiKeyResponse>(
+      `/auth/api_keys/deactivate/${apiKeyId}`,
+      {
+        method: 'DELETE',
+      },
+    );
   }
 
   // Traces endpoints
@@ -639,25 +723,28 @@ export class ArthurAPI {
   // Spans endpoints
   async querySpans(params?: SpansQueryParams): Promise<QuerySpansResponse> {
     const searchParams = new URLSearchParams();
-    
+
     if (params?.trace_ids) {
-      params.trace_ids.forEach(id => searchParams.append('trace_ids', id));
+      params.trace_ids.forEach((id) => searchParams.append('trace_ids', id));
     }
     if (params?.span_ids) {
-      params.span_ids.forEach(id => searchParams.append('span_ids', id));
+      params.span_ids.forEach((id) => searchParams.append('span_ids', id));
     }
     if (params?.task_ids) {
-      params.task_ids.forEach(id => searchParams.append('task_ids', id));
+      params.task_ids.forEach((id) => searchParams.append('task_ids', id));
     }
-    if (params?.start_time) searchParams.append('start_time', params.start_time);
+    if (params?.start_time)
+      searchParams.append('start_time', params.start_time);
     if (params?.end_time) searchParams.append('end_time', params.end_time);
     if (params?.sort) searchParams.append('sort', params.sort);
-    if (params?.page_size) searchParams.append('page_size', params.page_size.toString());
-    if (params?.page !== undefined) searchParams.append('page', params.page.toString());
+    if (params?.page_size)
+      searchParams.append('page_size', params.page_size.toString());
+    if (params?.page !== undefined)
+      searchParams.append('page', params.page.toString());
 
     const queryString = searchParams.toString();
     const endpoint = `/v1/spans/query${queryString ? `?${queryString}` : ''}`;
-    
+
     return this.request<QuerySpansResponse>(endpoint);
   }
 }
@@ -665,4 +752,4 @@ export class ArthurAPI {
 // Export a factory function for easier usage
 export function createArthurAPI(apiKey?: string, baseUrl?: string): ArthurAPI {
   return new ArthurAPI(apiKey, baseUrl);
-} 
+}
