@@ -20,6 +20,7 @@
     "test:e2e": "export PLAYWRIGHT=True && pnpm exec playwright test tests/playwright",
     "test:unit": "vitest",
     "test:unit:ui": "vitest --ui",
+    "test:integration": "vitest --run tests/vitest/integration",
     "test:ci": "pnpm test:e2e",
     "prepare": "husky"
   },
