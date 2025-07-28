@@ -21,6 +21,7 @@ test.describe
 
       while (request) {
         chain.unshift(request.url());
+        // @ts-ignore - redirectedFrom can return null
         request = request.redirectedFrom();
       }
 
@@ -57,13 +58,18 @@ test.describe
         throw new Error('Failed to load page');
       }
 
-      let request = response.request();
+      let request: any = response.request();
 
       const chain = [];
 
       while (request) {
         chain.unshift(request.url());
-        request = request.redirectedFrom();
+        const redirectedFrom = request.redirectedFrom();
+        if (redirectedFrom) {
+          request = redirectedFrom;
+        } else {
+          break;
+        }
       }
 
       expect(chain).toEqual(['http://localhost:3000/']);
