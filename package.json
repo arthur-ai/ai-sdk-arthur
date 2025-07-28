@@ -22,6 +22,7 @@
     "test:unit:ui": "vitest --ui",
     "test:integration": "vitest --run tests/vitest/integration",
     "test:ci": "pnpm test:e2e",
+    "setup:env": "node scripts/setup-env.js",
     "prepare": "husky"
   },
   "dependencies": {

@@ -1,15 +1,17 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
+ * Environment variables are loaded from GitHub Secrets in CI/CD
+ * and from .env.local in local development
  */
 import { config } from 'dotenv';
 
-// Load environment variables from .env.local if it exists
-config({
-  path: '.env.local',
-});
+// Only load .env.local in non-CI environments
+if (!process.env.CI) {
+  config({
+    path: '.env.local',
+  });
+}
 
 /* Use process.env.PORT by default and fallback to port 3000 */
 const PORT = process.env.PORT || 3000;
@@ -105,11 +107,17 @@ export default defineConfig({
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
     env: {
-      AUTH_SECRET: process.env.AUTH_SECRET || 'test-secret',
-      ARTHUR_API_KEY: process.env.ARTHUR_API_KEY || 'test-api-key',
-      ARTHUR_MODEL_ID: process.env.ARTHUR_MODEL_ID || 'test-model-id',
-      ARTHUR_API_BASE:
-        process.env.ARTHUR_API_BASE || 'https://test.api.arthur.ai',
+      // Pass through environment variables from GitHub Secrets
+      ...(process.env.AUTH_SECRET && { AUTH_SECRET: process.env.AUTH_SECRET }),
+      ...(process.env.ARTHUR_API_KEY && {
+        ARTHUR_API_KEY: process.env.ARTHUR_API_KEY,
+      }),
+      ...(process.env.ARTHUR_MODEL_ID && {
+        ARTHUR_MODEL_ID: process.env.ARTHUR_MODEL_ID,
+      }),
+      ...(process.env.ARTHUR_API_BASE && {
+        ARTHUR_API_BASE: process.env.ARTHUR_API_BASE,
+      }),
       ARTHUR_USE_GUARDRAILS: process.env.ARTHUR_USE_GUARDRAILS || 'true',
     },
   },
