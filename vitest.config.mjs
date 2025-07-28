@@ -8,6 +8,11 @@ export default defineConfig({
     setupFiles: ['./tests/vitest/unit/setup.ts'],
     include: ['tests/vitest/**/*.test.ts'],
     exclude: ['node_modules', 'dist', '.next'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html', 'lcov'],
+      reportsDirectory: './coverage',
+    },
   },
   resolve: {
     alias: {

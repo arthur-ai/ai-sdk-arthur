@@ -6,6 +6,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 import { config } from 'dotenv';
 
+// Load environment variables from .env.local if it exists
 config({
   path: '.env.local',
 });
@@ -103,5 +104,13 @@ export default defineConfig({
     url: `${baseURL}/ping`,
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
+    env: {
+      AUTH_SECRET: process.env.AUTH_SECRET || 'test-secret',
+      ARTHUR_API_KEY: process.env.ARTHUR_API_KEY || 'test-api-key',
+      ARTHUR_MODEL_ID: process.env.ARTHUR_MODEL_ID || 'test-model-id',
+      ARTHUR_API_BASE:
+        process.env.ARTHUR_API_BASE || 'https://test.api.arthur.ai',
+      ARTHUR_USE_GUARDRAILS: process.env.ARTHUR_USE_GUARDRAILS || 'true',
+    },
   },
 });
