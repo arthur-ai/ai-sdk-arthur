@@ -49,7 +49,7 @@ jobs:
         run: pnpm lint
 
       - name: Run Biome format check
-        run: pnpm format --check
+        run: pnpm format:check
 
       - name: Type check
         run: pnpm tsc --noEmit
