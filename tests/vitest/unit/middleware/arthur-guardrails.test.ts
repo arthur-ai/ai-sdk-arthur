@@ -36,29 +36,36 @@ describe('Arthur Guardrails Middleware', () => {
           scope: 'default',
           result: 'Fail',
           latency_ms: 100,
-          details: { detected_pii: ['SSN'] },
-        },
+          details: { detected_pii: ['SSN'] } as any,
+        } as any,
       ],
     });
 
     const mockDoGenerate = vi.fn().mockResolvedValue({
       text: 'This should not be returned',
       finishReason: 'stop',
-      usage: { promptTokens: 10, completionTokens: 5 },
+      usage: { promptTokens: 10, completionTokens: 5 } as any,
     });
+
+    if (!middleware.wrapGenerate) {
+      throw new Error('wrapGenerate method not found');
+    }
 
     const result = await middleware.wrapGenerate({
       doGenerate: mockDoGenerate,
+      doStream: vi.fn(),
+      model: {} as any,
       params: {
+        inputFormat: 'messages',
+        mode: { type: 'regular' } as any,
         prompt: [
           {
-            id: 'msg-1',
             role: 'user',
-            content: 'My SSN is 123-45-6789',
-          },
+            content: [{ type: 'text', text: 'My SSN is 123-45-6789' }],
+          } as any,
         ],
-      },
-    });
+      } as any,
+    } as any);
 
     expect(result.text).toBe('Message blocked due to PII');
     expect(result.finishReason).toBe('stop');
@@ -81,27 +88,34 @@ describe('Arthur Guardrails Middleware', () => {
           scope: 'default',
           result: 'Pass',
           latency_ms: 100,
-        },
+        } as any,
       ],
     });
 
     const mockDoGenerate = vi.fn().mockResolvedValue({
       text: 'Hello, how are you?',
       finishReason: 'stop',
-      usage: { promptTokens: 10, completionTokens: 5 },
+      usage: { promptTokens: 10, completionTokens: 5 } as any,
     });
+
+    if (!middleware.wrapGenerate) {
+      throw new Error('wrapGenerate method not found');
+    }
 
     const result = await middleware.wrapGenerate({
       doGenerate: mockDoGenerate,
+      doStream: vi.fn(),
+      model: {} as any,
       params: {
+        inputFormat: 'messages',
+        mode: { type: 'regular' } as any,
         prompt: [
           {
-            id: 'msg-1',
             role: 'user',
-            content: 'Hello, how are you?',
-          },
+            content: [{ type: 'text', text: 'Hello, how are you?' }],
+          } as any,
         ],
-      },
+      } as any,
     });
 
     expect(result.text).toBe('Hello, how are you?');
@@ -119,20 +133,27 @@ describe('Arthur Guardrails Middleware', () => {
     const mockDoGenerate = vi.fn().mockResolvedValue({
       text: 'Hello, how are you?',
       finishReason: 'stop',
-      usage: { promptTokens: 10, completionTokens: 5 },
+      usage: { promptTokens: 10, completionTokens: 5 } as any,
     });
+
+    if (!middleware.wrapGenerate) {
+      throw new Error('wrapGenerate method not found');
+    }
 
     const result = await middleware.wrapGenerate({
       doGenerate: mockDoGenerate,
+      doStream: vi.fn(),
+      model: {} as any,
       params: {
+        inputFormat: 'messages',
+        mode: { type: 'regular' } as any,
         prompt: [
           {
-            id: 'msg-1',
             role: 'user',
-            content: 'Hello, how are you?',
-          },
+            content: [{ type: 'text', text: 'Hello, how are you?' }],
+          } as any,
         ],
-      },
+      } as any,
     });
 
     // Should pass through when API fails
@@ -149,20 +170,27 @@ describe('Arthur Guardrails Middleware', () => {
     const mockDoGenerate = vi.fn().mockResolvedValue({
       text: 'Response',
       finishReason: 'stop',
-      usage: { promptTokens: 10, completionTokens: 5 },
+      usage: { promptTokens: 10, completionTokens: 5 } as any,
     });
+
+    if (!middleware.wrapGenerate) {
+      throw new Error('wrapGenerate method not found');
+    }
 
     const result = await middleware.wrapGenerate({
       doGenerate: mockDoGenerate,
+      doStream: vi.fn(),
+      model: {} as any,
       params: {
+        inputFormat: 'messages',
+        mode: { type: 'regular' } as any,
         prompt: [
           {
-            id: 'msg-1',
             role: 'assistant',
-            content: 'Previous response',
-          },
+            content: [{ type: 'text', text: 'Previous response' }],
+          } as any,
         ],
-      },
+      } as any,
     });
 
     expect(result.text).toBe('Response');

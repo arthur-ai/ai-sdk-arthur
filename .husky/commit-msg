@@ -1,0 +1,2 @@
+# Ensure commit message follows conventional commits format
+npx --no -- commitlint --edit $1 

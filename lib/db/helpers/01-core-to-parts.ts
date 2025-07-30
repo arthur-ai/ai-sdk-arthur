@@ -12,9 +12,12 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import { inArray } from 'drizzle-orm';
 import { appendResponseMessages, type UIMessage } from 'ai';
 
-config({
-  path: '.env.local',
-});
+// Only load .env.local in non-CI environments
+if (!process.env.CI) {
+  config({
+    path: '.env.local',
+  });
+}
 
 if (!process.env.POSTGRES_URL) {
   throw new Error('POSTGRES_URL environment variable is not set');

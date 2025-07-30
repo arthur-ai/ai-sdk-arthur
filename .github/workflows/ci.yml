@@ -208,11 +208,11 @@ jobs:
       - name: Build application
         run: pnpm build
         env:
-          ARTHUR_API_KEY: ${{ secrets.ARTHUR_API_KEY }}
-          ARTHUR_MODEL_ID: ${{ secrets.ARTHUR_MODEL_ID }}
-          ARTHUR_API_BASE: ${{ secrets.ARTHUR_API_BASE }}
+          ARTHUR_API_KEY: ${{ secrets.STAGING_ARTHUR_API_KEY }}
+          ARTHUR_MODEL_ID: ${{ secrets.STAGING_ARTHUR_MODEL_ID }}
+          ARTHUR_API_BASE: ${{ secrets.STAGING_ARTHUR_API_BASE }}
           ARTHUR_USE_GUARDRAILS: "true"
-          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          AUTH_SECRET: ${{ secrets.STAGING_AUTH_SECRET }}
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25

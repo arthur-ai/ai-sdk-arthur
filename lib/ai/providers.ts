@@ -35,14 +35,16 @@ export const myProvider = isTestEnvironment
 
         'chat-model-reasoning': wrapLanguageModel({
           model: xai('grok-3-mini-beta'),
-          middleware: [extractReasoningMiddleware({ tagName: 'think' }), useGuardrails ? arthurGuardrails : arthurValidation],
+          middleware: [
+            extractReasoningMiddleware({ tagName: 'think' }),
+            useGuardrails ? arthurGuardrails : arthurValidation,
+          ],
         }),
         'title-model': xai('grok-2-1212'),
         'artifact-model': wrapLanguageModel({
           model: xai('grok-2-1212'),
           middleware: arthurValidation,
         }),
-        
       },
       imageModels: {
         'small-model': xai.image('grok-2-image'),
