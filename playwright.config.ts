@@ -112,8 +112,8 @@ export default defineConfig({
       ...(process.env.ARTHUR_API_KEY && {
         ARTHUR_API_KEY: process.env.ARTHUR_API_KEY,
       }),
-      ...(process.env.ARTHUR_MODEL_ID && {
-        ARTHUR_MODEL_ID: process.env.ARTHUR_MODEL_ID,
+      ...(process.env.ARTHUR_TASK_ID && {
+        ARTHUR_TASK_ID: process.env.ARTHUR_TASK_ID,
       }),
       ...(process.env.ARTHUR_API_BASE && {
         ARTHUR_API_BASE: process.env.ARTHUR_API_BASE,

@@ -34,7 +34,7 @@ AUTH_SECRET=your-generated-secret
 
 # Arthur AI Configuration
 ARTHUR_API_KEY=your-arthur-api-key
-ARTHUR_MODEL_ID=your-model-id
+ARTHUR_TASK_ID=your-model-id
 ARTHUR_API_BASE=http://localhost:8080
 ARTHUR_USE_GUARDRAILS=true
 
@@ -88,7 +88,7 @@ For production, deploy a self-hosted Arthur GenAI Engine:
 
 3. **Create Model**
    - Copy Model ID from validate prompt command
-   - Update `ARTHUR_MODEL_ID` in your environment
+   - Update `ARTHUR_TASK_ID` in your environment
 
 ### Getting API Keys
 

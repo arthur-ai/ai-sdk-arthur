@@ -16,7 +16,7 @@ AUTH_SECRET=your-auth-secret-here
 
 # Arthur AI Configuration
 ARTHUR_API_KEY=your-arthur-api-key-here
-ARTHUR_MODEL_ID=your-arthur-model-id-here
+ARTHUR_TASK_ID=your-arthur-model-id-here
 ARTHUR_API_BASE=https://api.arthur.ai
 ARTHUR_USE_GUARDRAILS=true
 
@@ -45,7 +45,7 @@ if (fs.existsSync(envPath)) {
 console.log('📋 Required GitHub Secrets for CI/CD:');
 console.log('   - AUTH_SECRET');
 console.log('   - ARTHUR_API_KEY');
-console.log('   - ARTHUR_MODEL_ID');
+console.log('   - ARTHUR_TASK_ID');
 console.log('   - ARTHUR_API_BASE');
 console.log('   - POSTGRES_URL (if using database in CI)\n');
 

@@ -69,7 +69,7 @@ docker logs arthur-engine
 1. In Arthur Platform, go to your model
 2. Copy the Model ID from the validate prompt command
 3. The ID is in the URL: `/api/v2/tasks/{MODEL_ID}/`
-4. Update `ARTHUR_MODEL_ID` in `.env.local`
+4. Update `ARTHUR_TASK_ID` in `.env.local`
 
 ### Content Blocking Issues
 
@@ -115,7 +115,7 @@ vi.mock('@/lib/ai/arthur-api', () => ({
 ```typescript
 // Add to tests/vitest/unit/setup.ts
 process.env.ARTHUR_API_KEY = 'test-api-key';
-process.env.ARTHUR_MODEL_ID = 'test-model-id';
+process.env.ARTHUR_TASK_ID = 'test-model-id';
 ```
 
 ### E2E Test Problems
@@ -289,7 +289,7 @@ docker logs -f arthur-engine
 - `MissingSecret`: Set `AUTH_SECRET`
 - `Connection refused`: Arthur GenAI Engine not running
 - `Invalid API key`: Check `ARTHUR_API_KEY`
-- `Model not found`: Verify `ARTHUR_MODEL_ID`
+- `Model not found`: Verify `ARTHUR_TASK_ID`
 
 ## Getting Help
 

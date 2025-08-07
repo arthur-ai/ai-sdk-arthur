@@ -86,7 +86,7 @@ Use Arthur AI's Docker-based local deployment option for local Vercel developmen
 **Required Environment Variables:**
 - `AUTH_SECRET` - Secret for authentication (generate with `openssl rand -base64 32`)
 - `ARTHUR_API_KEY` - Your Arthur AI API key
-- `ARTHUR_MODEL_ID` - Your Arthur AI model ID
+- `ARTHUR_TASK_ID` - Your Arthur AI model ID
 - `ARTHUR_API_BASE` - Arthur AI API base URL (for production, use your self-hosted engine endpoint)
 - `ARTHUR_USE_GUARDRAILS` - Set to `true` to enable content blocking (PII/toxicity), `false` for logging only
 
@@ -196,7 +196,7 @@ Arthur Platform provides **active enforcement** of AI safety rules, ensuring tha
 
 Build and deploy your AI chatbot with enterprise-grade safety and compliance. This template includes Arthur Platform's active guardrails to ensure your AI applications remain safe, compliant, and trustworthy.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Farthur-ai%2Fai-sdk-arthur&env=AUTH_SECRET%2CARTHUR_API_KEY%2CARTHUR_MODEL_ID%2CARTHUR_API_BASE&envDescription=Learn%20more%20about%20how%20to%20get%20the%20API%20Keys%20for%20the%20application&envLink=https%3A%2F%2Fgithub.com%2Farthur-ai%2Fai-sdk-arthur%2Fblob%2Fmain%2F.env.example&demo-title=AI%20Chatbot%20With%20Arthur&demo-description=An%20Open-Source%20AI%20Chatbot%20Template%20Built%20With%20Next.js%20and%20the%20AI%20SDK%20by%20Vercel.&demo-url=https%3A%2F%2Fchat.vercel.ai&products=%5B%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22ai%22%2C%22productSlug%22%3A%22grok%22%2C%22integrationSlug%22%3A%22xai%22%7D%2C%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22storage%22%2C%22productSlug%22%3A%22neon%22%2C%22integrationSlug%22%3A%22neon%22%7D%2C%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22storage%22%2C%22productSlug%22%3A%22upstash-kv%22%2C%22integrationSlug%22%3A%22upstash%22%7D%2C%7B%22type%22%3A%22blob%22%7D%5D)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Farthur-ai%2Fai-sdk-arthur&env=AUTH_SECRET%2CARTHUR_API_KEY%2CARTHUR_TASK_ID%2CARTHUR_API_BASE&envDescription=Learn%20more%20about%20how%20to%20get%20the%20API%20Keys%20for%20the%20application&envLink=https%3A%2F%2Fgithub.com%2Farthur-ai%2Fai-sdk-arthur%2Fblob%2Fmain%2F.env.example&demo-title=AI%20Chatbot%20With%20Arthur&demo-description=An%20Open-Source%20AI%20Chatbot%20Template%20Built%20With%20Next.js%20and%20the%20AI%20SDK%20by%20Vercel.&demo-url=https%3A%2F%2Fchat.vercel.ai&products=%5B%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22ai%22%2C%22productSlug%22%3A%22grok%22%2C%22integrationSlug%22%3A%22xai%22%7D%2C%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22storage%22%2C%22productSlug%22%3A%22neon%22%2C%22integrationSlug%22%3A%22neon%22%7D%2C%7B%22type%22%3A%22integration%22%2C%22protocol%22%3A%22storage%22%2C%22productSlug%22%3A%22upstash-kv%22%2C%22integrationSlug%22%3A%22upstash%22%7D%2C%7B%22type%22%3A%22blob%22%7D%5D)
 
 ### **Why Choose This Template?**
 
