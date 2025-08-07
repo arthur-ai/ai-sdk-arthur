@@ -5,7 +5,7 @@ import type {
 } from 'ai';
 import { createArthurAPI, type ValidationResult } from '../arthur-api';
 
-interface ArthurPIIBlockingMiddlewareOptions {
+interface ArthurMiddlewareConfig {
   taskId: string;
   apiKey?: string;
   baseUrl?: string;
@@ -13,7 +13,7 @@ interface ArthurPIIBlockingMiddlewareOptions {
 }
 
 export function createArthurGuardrailsMiddleware(
-  options: ArthurPIIBlockingMiddlewareOptions,
+  options: ArthurMiddlewareConfig,
 ): LanguageModelV1Middleware {
   const {
     taskId,
@@ -69,10 +69,7 @@ export function createArthurGuardrailsMiddleware(
         });
 
         const ruleFailures = promptValidation.rule_results?.filter(
-          (rule) =>
-            rule.result === 'Fail' &&
-            (rule.rule_type === 'PIIDataRule' ||
-              rule.rule_type === 'ToxicityRule'),
+          (rule) => rule.result === 'Fail',
         );
 
         if (ruleFailures && ruleFailures.length > 0) {
@@ -84,7 +81,7 @@ export function createArthurGuardrailsMiddleware(
           };
         }
       } catch (error) {
-        console.error('Arthur PII validation error:', error);
+        console.error('Arthur guardrails validation error:', error);
       }
 
       const result = await doGenerate();
@@ -152,10 +149,7 @@ export function createArthurGuardrailsMiddleware(
         });
 
         const ruleFailures = promptValidation.rule_results?.filter(
-          (rule) =>
-            rule.result === 'Fail' &&
-            (rule.rule_type === 'PIIDataRule' ||
-              rule.rule_type === 'ToxicityRule'),
+          (rule) => rule.result === 'Fail',
         );
 
         if (ruleFailures && ruleFailures.length > 0) {
@@ -193,7 +187,7 @@ export function createArthurGuardrailsMiddleware(
           };
         }
       } catch (error) {
-        console.error('Arthur PII or toxicity validation error:', error);
+        console.error('Arthur guardrails validation error:', error);
       }
 
       const { stream, ...rest } = await doStream();
@@ -224,7 +218,10 @@ export function createArthurGuardrailsMiddleware(
               })
               .then(() => {})
               .catch((error) => {
-                console.error('Arthur PII response validation error:', error);
+                console.error(
+                  'Arthur guardrails response validation error:',
+                  error,
+                );
               });
           }
 
